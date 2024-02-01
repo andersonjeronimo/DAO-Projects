@@ -11,6 +11,13 @@ library CondominiumLib {
         DENIED
     }
 
+    enum Category {
+        DECISION,
+        SPENT,
+        CHANGE_QUOTA,
+        CHANGE_MANAGER
+    }
+
     struct Topic {
         string title;
         string description;
@@ -18,6 +25,9 @@ library CondominiumLib {
         uint256 createdDate;
         uint256 startDate;
         uint256 endDate;
+        Category category;
+        uint amount;
+        address accountable;
     }
 
     enum Options {
@@ -25,7 +35,7 @@ library CondominiumLib {
         YES,
         NO,
         ABSTENTION
-    }
+    }   
 
     struct Vote {
         address resident;
@@ -33,4 +43,6 @@ library CondominiumLib {
         Options option;
         uint256 timestamp;
     }
+
+    
 }

@@ -7,11 +7,16 @@ pragma solidity ^0.8.9;
 import "./ICondominium.sol";
 
 contract CondominiumAdapter {
-
     ICondominium private implementation;
     address public immutable owner;
+
     constructor() {
         owner = msg.sender;
+    }
+
+    modifier upgraded() {
+        require(address(implementation) != address(0), "Must upgrade first");
+        _;
     }
 
     function upgrade(address newImpl) external {
@@ -23,41 +28,66 @@ contract CondominiumAdapter {
         return address(implementation);
     }
 
-    function addResident(address resident, uint16 residenceId) external {
+    function addResident(
+        address resident,
+        uint16 residenceId
+    ) external upgraded {
         return implementation.addResident(resident, residenceId);
     }
 
-    function removeResident(address resident) external {
+    function removeResident(address resident) external upgraded {
         return implementation.removeResident(resident);
     }
 
-    function setCouncelor(address resident, bool isEntering) external {
+    function setCouncelor(address resident, bool isEntering) external upgraded {
         return implementation.setCouncelor(resident, isEntering);
     }
 
-    //TODO: edit -> must be voted
-    function setManager(address newManager) external {
-        return implementation.setManager(newManager);
+    function addTopic(
+        string memory title,
+        string memory description,
+        Lib.Category category,
+        uint amount,
+        address accountable
+    ) external upgraded {
+        return
+            implementation.addTopic(
+                title,
+                description,
+                category,
+                amount,
+                accountable
+            );
     }
 
-    //TODO: edit -> must be voted (must decide how much to spend)
-    function addTopic(string memory title, string memory description) external {
-        return implementation.addTopic(title, description);
+    function editTopic(
+        string memory topicToEdit,
+        string memory description,
+        uint amount,
+        address accountable
+    ) external upgraded {
+        return
+            implementation.editTopic(
+                topicToEdit,
+                description,
+                amount,
+                accountable
+            );
     }
 
-    function removeTopic(string memory title) external {
+    function removeTopic(string memory title) external upgraded {
         return implementation.removeTopic(title);
     }
 
-    function openVoting(string memory title) external {
+    function openVoting(string memory title) external upgraded {
         return implementation.openVoting(title);
     }
 
-    function vote(string memory title, Lib.Options option) external {
+    function vote(string memory title, Lib.Options option) external upgraded {
         return implementation.vote(title, option);
     }
 
-    function closeVoting(string memory title) external {
+    function closeVoting(string memory title) external upgraded {
         return implementation.closeVoting(title);
     }
 
@@ -66,6 +96,4 @@ contract CondominiumAdapter {
     //TODO: function to set quota
     //TODO: function to pay quota
     //TODO: function to transfer
-
-
 }

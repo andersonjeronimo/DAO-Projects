@@ -1,6 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { Condominium } from "../typechain-types";
 
 describe("Condominium", function () {
   enum Options {
@@ -10,174 +11,213 @@ describe("Condominium", function () {
     ABSTENTION = 3
   }
 
+  enum Category {
+    DECISION = 0,
+    SPENT = 1,
+    CHANGE_QUOTA = 2,
+    CHANGE_MANAGER = 3
+  }
+
   enum Status {
     IDLE = 0,
     VOTING = 1,
     APPROVED = 2,
     DENIED = 3
-}
-  // We define a fixture to reuse the same setup in every test.
-  // We use loadFixture to run this setup once, snapshot that state,
-  // and reset Hardhat Network to that snapshot in every test.
-  async function deployFixture() {
-    // Contracts are deployed using the first signer/account by default
-    const [manager, resident] = await ethers.getSigners();
+  }
+
+  //2 bl 5 and 4 apt
+  const residences = [1101,1102,1103,1104,1201,1202,1203,1204,1301,1302,1303,1304,
+    1401,1402,1403,1404,1501,1502,1503,1504];
+
+  async function deployFixture() {    
+    const accounts = await ethers.getSigners();
+    const manager = accounts[0];  
 
     const Condominium = await ethers.getContractFactory("Condominium");
     const contract = await Condominium.deploy();
 
-    return { contract, manager, resident };
+    return { contract, manager, accounts };
   }
 
   describe("Condominium tests", function () {
 
     it("Should be residence", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
       expect(await contract.residenceExists(1101)).to.equal(true);
     });
 
-    it("Should add resident", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      expect(await contract.isResident(resident.address)).to.equal(true);
+    it("Should add accounts", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      expect(await contract.isResident(accounts[1].address)).to.equal(true);
     });
 
-    it("Should remove resident", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.removeResident(resident.address);
-      expect(await contract.isResident(resident)).to.be.equal(false);
+    it("Should remove accounts", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      await contract.removeResident(accounts[1].address);
+      expect(await contract.isResident(accounts[1])).to.be.equal(false);
     });
 
-    it("Should NOT remove resident (permission)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      const instance = contract.connect(resident);
-      await expect(instance.removeResident(resident.address)).to.revertedWith("Only manager is authorized");
+    it("Should NOT remove accounts (permission)", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      const instance = contract.connect(accounts[1]);
+      await expect(instance.removeResident(accounts[1].address)).to.revertedWith("Only manager is authorized");
     });
 
-    it("Should NOT remove resident (is councelor)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.setCouncelor(resident.address, true);
-      await expect(contract.removeResident(resident.address)).to.revertedWith("A councelor cannot be removed");
+    it("Should NOT remove accounts (is councelor)", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      await contract.setCouncelor(accounts[1].address, true);
+      await expect(contract.removeResident(accounts[1].address)).to.revertedWith("A councelor cannot be removed");
     });
 
-    it("Should NOT add resident (residence does not exists)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await expect(contract.addResident(resident.address, 1)).to.revertedWith("This residence does not exists");
+    it("Should NOT add accounts (residence does not exists)", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await expect(contract.addResident(accounts[1].address, 1)).to.revertedWith("This residence does not exists");
     });
 
-    it("Should NOT add resident (permission)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      const instance = contract.connect(resident);
-      await expect(instance.addResident(resident.address, 1)).to.revertedWith("Only manager or council is authorized");
+    it("Should NOT add accounts (permission)", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      const instance = contract.connect(accounts[1]);
+      await expect(instance.addResident(accounts[1].address, 1)).to.revertedWith("Only manager or council is authorized");
     });
 
     it("Should set manager", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.setManager(resident.address);
-      expect(await contract.manager()).to.be.equal(resident.address);
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+     
+      for (let index = 0; index < 16; index++) {        
+        await contract.addResident(accounts[index + 1].address, residences[index]);
+      }     
+      
+      await contract.addTopic("change manager", "lorem ipsum", Category.CHANGE_MANAGER, 0, accounts[1]);
+      await contract.openVoting("change manager");
+      
+      let instance:Condominium;
+      for (let index = 0; index < 16; index++) {
+        instance = contract.connect(accounts[index + 1]);
+        await instance.vote("change manager", Options.YES);       
+      }
+     
+      await contract.closeVoting("change manager");      
+      expect(await contract.manager()).to.be.equal(accounts[1].address);
     });
 
-    it("Should NOT set manager (permission)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      const instance = contract.connect(resident);
-      await expect(instance.setManager(resident.address)).to.revertedWith("Only manager is authorized");
-    });
-
-    it("Should NOT set manager (address)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await expect(contract.setManager(ethers.ZeroAddress)).to.revertedWith("The address must be valid");
+    it("Should change quota", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+     
+      for (let index = 0; index < 20; index++) {
+        await contract.addResident(accounts[index].address, residences[index]);
+      }     
+      
+      const value = ethers.parseEther("0.02");
+      await contract.addTopic("change quota", "lorem ipsum", Category.CHANGE_QUOTA, value, manager);
+      await contract.openVoting("change quota");
+      
+      let instance:Condominium;
+      for (let index = 0; index < 20; index++) {
+        instance = contract.connect(accounts[index]);
+        await instance.vote("change quota", Options.YES);       
+      }
+     
+      await contract.closeVoting("change quota");
+      expect(await contract.monthlyQuota()).to.be.equal(value);
     });
 
     it("Should add topic", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       expect(await contract.topicExists("topic 1")).to.equal(true);
     });
 
     it("Should NOT remove topic (status)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       await contract.openVoting("topic 1");
       await expect(contract.removeTopic("topic 1")).to.revertedWith("Only IDLE topics can be removed");
     });
 
     it("Should vote", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       await contract.openVoting("topic 1");
 
-      const instance = contract.connect(resident);
+      const instance = contract.connect(accounts[1]);
       await instance.vote("topic 1", Options.YES);
 
       expect(await instance.numberOfVotes("topic 1")).to.be.equal(1);
     });
 
     it("Should NOT vote (duplicated)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       await contract.openVoting("topic 1");
 
-      const instance = contract.connect(resident);
+      const instance = contract.connect(accounts[1]);
       await instance.vote("topic 1", Options.YES);
 
       await expect(instance.vote("topic 1", Options.YES)).to.revertedWith("A residence should vote only once");
     });
 
     it("Should NOT vote (status)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       //await contract.openVoting("topic 1");
-      const instance = contract.connect(resident);
+      const instance = contract.connect(accounts[1]);
       await expect(instance.vote("topic 1", Options.YES)).to.revertedWith("Only VOTING topics can be voted");
     });
 
     it("Should NOT vote (topic does not exists)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      //await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      //await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       //await contract.openVoting("topic 1");
-      const instance = contract.connect(resident);
+      const instance = contract.connect(accounts[1]);
       await expect(instance.vote("topic 1", Options.YES)).to.revertedWith("The topic does not exists");
     });
 
     it("Should NOT vote (permission)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      //await contract.addResident(resident.address, 2102);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      //await contract.addResident(accounts.address, 2102);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       await contract.openVoting("topic 1");
 
-      const instance = contract.connect(resident);
+      const instance = contract.connect(accounts[1]);
       await expect(instance.vote("topic 1", Options.YES)).to.revertedWith("Only manager or resident is authorized");
     });
 
     it("Should NOT vote (empty)", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+      await contract.addResident(accounts[1].address, 2102);
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       await contract.openVoting("topic 1");
 
-      const instance = contract.connect(resident);
+      const instance = contract.connect(accounts[1]);
       await expect(instance.vote("topic 1", Options.EMPTY)).to.revertedWith("The option can not be EMPTY");
     });
 
     it("Should close voting", async function () {
-      const { contract, manager, resident } = await loadFixture(deployFixture);
-      await contract.addResident(resident.address, 2102);
-      await contract.addTopic("topic 1", "lorem ipsum");
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+
+      for (let index = 0; index < 5; index++) {
+        await contract.addResident(accounts[index + 1].address, residences[index]);
+      }   
+
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       await contract.openVoting("topic 1");
-      await contract.vote("topic 1", Options.YES);
-      const instance = contract.connect(resident);
-      await instance.vote("topic 1", Options.YES);
+      
+      let instance:Condominium;
+      for (let index = 0; index < 5; index++) {
+        instance = contract.connect(accounts[index + 1]);
+        await instance.vote("topic 1", Options.YES);
+      }   
+
       await contract.closeVoting("topic 1");
-
       const topic = await contract.getTopic("topic 1");
-
       expect(topic.status).to.be.equal(Status.APPROVED);
     });
 

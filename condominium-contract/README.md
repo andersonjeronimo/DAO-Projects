@@ -11,7 +11,7 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.ts
 ```
-# condominum smart contract
+# Condominum Smart Contract
 Blockchain smart contract for DAO Condominium
 
 ## How to test

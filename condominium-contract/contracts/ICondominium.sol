@@ -10,13 +10,11 @@ interface ICondominium {
 
     function removeResident(address resident) external;
 
-    function setCouncelor(address resident, bool isEntering) external;
-
-    //TODO: edit -> must be voted
-    function setManager(address newManager) external;
-
-    //TODO: edit -> must be voted (must decide how much to spend)
-    function addTopic(string memory title, string memory description) external;
+    function setCouncelor(address resident, bool isEntering) external;    
+    
+    function editTopic(string memory topicToEdit, string memory description, uint amount, address accountable) external; 
+    
+    function addTopic(string memory title, string memory description, Lib.Category category, uint amount, address accountable) external;
 
     function removeTopic(string memory title) external;
 
