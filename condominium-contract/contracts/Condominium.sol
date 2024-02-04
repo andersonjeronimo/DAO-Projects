@@ -13,7 +13,9 @@ contract Condominium is ICondominium {
 
     mapping(address => bool) public counselors; //wallet -> isCounselor "
     mapping(address => uint16) public residents; //wallet -> ex.:"1101"
-    mapping(uint16 => bool) public residences; //cadastro de todas as unidades
+    mapping(uint16 => bool) public residences; // "1101" -> true: cadastro de todas as unidades
+
+    mapping(uint16 => uint) public payments; // unidade -> último pagamento (timestamp em segundos)
 
     mapping(bytes32 => Lib.Topic) public topics;
     mapping(bytes32 => Lib.Vote[]) public votings;
@@ -51,6 +53,12 @@ contract Condominium is ICondominium {
             tx.origin == manager || isResident(tx.origin),
             "Only manager or resident is authorized"
         );
+        require(
+            tx.origin == manager ||
+                block.timestamp <=
+                payments[residents[tx.origin]] + (30 * 24 * 60 * 60),
+            "The resident must be defaulter"
+        );
         _;
     }
 
@@ -75,7 +83,9 @@ contract Condominium is ICondominium {
         residents[resident] = residenceId;
     }
 
-    function removeResident(address resident) external onlyManager validAddress(resident) {
+    function removeResident(
+        address resident
+    ) external onlyManager validAddress(resident) {
         require(!counselors[resident], "A councelor cannot be removed");
         delete residents[resident];
         if (counselors[resident]) {
@@ -146,7 +156,7 @@ contract Condominium is ICondominium {
         string memory description,
         uint amount,
         address accountable
-    ) external onlyManager validAddress(accountable){
+    ) external onlyManager validAddress(accountable) returns(Lib.TopicUpdate memory) {
         bytes32 topicId = keccak256(bytes(topicToEdit));
         require(topics[topicId].createdDate > 0, "Topic does not exists");
         require(
@@ -163,19 +173,36 @@ contract Condominium is ICondominium {
         if (accountable != address(0)) {
             topics[topicId].accountable = accountable;
         }
+
+        return Lib.TopicUpdate({
+            id: topicId,
+            title: topicToEdit,
+            status: topics[topicId].status, 
+            category: topics[topicId].category
+        });
     }
 
-    function removeTopic(string memory title) external onlyManager {
+    function removeTopic(string memory title) external onlyManager returns(Lib.TopicUpdate memory){
         bytes32 topicId = keccak256(bytes(title));
         require(topics[topicId].createdDate > 0, "Topic does not exists");
         require(
             topics[topicId].status == Lib.Status.IDLE,
             "Only IDLE topics can be removed"
         );
+        Lib.Category category = topics[topicId].category;
+        
         delete topics[topicId];
+
+        return Lib.TopicUpdate({
+            id: topicId,
+            title: title,
+            status: Lib.Status.DELETED,
+            category: category
+        });
+
     }
 
-    function openVoting(string memory title) external onlyManager {
+    function openVoting(string memory title) external onlyManager returns(Lib.TopicUpdate memory){
         bytes32 topicId = keccak256(bytes(title));
         require(topics[topicId].createdDate > 0, "The topic does not exists");
         require(
@@ -185,6 +212,13 @@ contract Condominium is ICondominium {
 
         topics[topicId].status = Lib.Status.VOTING;
         topics[topicId].startDate = block.timestamp;
+        
+        return Lib.TopicUpdate({
+            id: topicId,
+            title: title,
+            status: topics[topicId].status, 
+            category: topics[topicId].category
+        });
     }
 
     function alreadyVoted(
@@ -211,7 +245,8 @@ contract Condominium is ICondominium {
             "Only VOTING topics can be voted"
         );
 
-        uint16 residence = residents[msg.sender];
+        //uint16 residence = residents[msg.sender];
+        uint16 residence = residents[tx.origin];
         Lib.Vote[] memory votes = votings[topicId];
         require(
             !alreadyVoted(residence, votes),
@@ -220,7 +255,8 @@ contract Condominium is ICondominium {
 
         Lib.Vote memory newVote = Lib.Vote({
             residence: residence,
-            resident: msg.sender,
+            //resident: msg.sender,
+            resident: tx.origin,
             option: option,
             timestamp: block.timestamp
         });
@@ -228,7 +264,7 @@ contract Condominium is ICondominium {
         votings[topicId].push(newVote);
     }
 
-    function closeVoting(string memory title) external onlyManager {
+    function closeVoting(string memory title) external onlyManager returns(Lib.TopicUpdate memory) {
         bytes32 topicId = keccak256(bytes(title));
         require(topics[topicId].createdDate > 0, "The topic does not exists");
         require(
@@ -284,10 +320,58 @@ contract Condominium is ICondominium {
                 manager = topics[topicId].accountable;
             }
         }
+
+        return Lib.TopicUpdate({
+            id: topicId,
+            title: title,
+            status: topics[topicId].status, 
+            category: topics[topicId].category
+        });
     }
 
     function numberOfVotes(string memory title) public view returns (uint256) {
         bytes32 topicId = keccak256(bytes(title));
         return votings[topicId].length;
+    }
+
+    function payQuota(uint16 residenceId) external payable {
+        require(residenceExists(residenceId), "The residence does not exists");
+        require(msg.value >= monthlyQuota, "Wrong value");
+        require(
+            block.timestamp >
+                payments[residents[tx.origin]] + 30 * 24 * 60 * 60,
+            "Cannot pay twice in a month"
+        );
+        payments[residenceId] = block.timestamp;
+    }
+
+    function transfer(
+        string memory topicTitle,
+        uint amount
+    ) external onlyManager returns(Lib.TransferReceipt memory) {
+        require(address(this).balance >= amount, "Insufficient funds");
+        bytes32 topicId = keccak256(bytes(topicTitle));
+        require(topics[topicId].createdDate > 0, "The topic does not exists");
+        require(
+            topics[topicId].status == Lib.Status.APPROVED &&
+                topics[topicId].category == Lib.Category.SPENT,
+            "Transfers only for APPROVED and SPENT topics"
+        );
+        require(topics[topicId].amount >= amount, "The amount must be less or equal the APPROVED");
+        payable(topics[topicId].accountable).transfer(amount);
+        topics[topicId].status = Lib.Status.SPENT;
+        return Lib.TransferReceipt({
+            to: topics[topicId].accountable,
+            amount: amount,
+            topic: topicTitle
+        });
+    }
+
+    function getManager() external view returns(address){
+        return manager;
+    }
+
+    function getQuota() external view returns(uint){
+        return monthlyQuota;
     }
 }

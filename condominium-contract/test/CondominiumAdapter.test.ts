@@ -1,6 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { CondominiumAdapter } from "../typechain-types";
 
 describe("Condominium Adapter tests", function () {
   enum Options {
@@ -21,8 +22,14 @@ describe("Condominium Adapter tests", function () {
     IDLE = 0,
     VOTING = 1,
     APPROVED = 2,
-    DENIED = 3
+    DENIED = 3,
+    SPENT = 4
   }
+
+  //2 bl 5 and 4 apt
+  const residences = [1101, 1102, 1103, 1104, 1201, 1202, 1203, 1204, 1301, 1302, 1303, 1304,
+    1401, 1402, 1403, 1404, 1501, 1502, 1503, 1504];
+
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
@@ -100,6 +107,60 @@ describe("Condominium Adapter tests", function () {
       await adapter.upgrade(contractAddress);
       await adapter.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);      
       expect(await contract.topicExists("topic 1")).to.equal(true);
+    });
+
+    it("Should vote", async function () {
+      const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
+      const { contract } = await loadFixture(deployImplementationFixture);
+      const contractAddress = await contract.getAddress();
+      await adapter.upgrade(contractAddress);
+
+      await adapter.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
+      await adapter.openVoting("topic 1");
+      await adapter.addResident(accounts[1].address, residences[1]);
+
+      const instance = adapter.connect(accounts[1]);
+      await instance.payQuota(residences[1], { value: ethers.parseEther("0.01") });
+      await instance.vote("topic 1", Options.YES);
+
+      expect(await contract.numberOfVotes("topic 1")).to.be.equal(1);
+    });
+
+    it("Should transfer", async function () {
+      const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
+      const { contract } = await loadFixture(deployImplementationFixture);
+      const contractAddress = await contract.getAddress();      
+      await adapter.upgrade(contractAddress);
+
+      for (let index = 0; index < 10; index++) {
+        await adapter.addResident(accounts[index + 1].address, residences[index]);
+      }
+
+      await adapter.addTopic("some spent topic", "buy stuff", Category.SPENT, 100, accounts[1].address);
+      await adapter.openVoting("some spent topic");
+
+      let instance: CondominiumAdapter;
+      for (let index = 0; index < 10; index++) {
+        instance = adapter.connect(accounts[index + 1]);
+        await instance.payQuota(residences[index], { value: ethers.parseEther("0.01") });
+        await instance.vote("some spent topic", Options.YES);
+      }
+
+      await adapter.closeVoting("some spent topic");
+
+      const balanceBefore = await ethers.provider.getBalance(contract.getAddress());
+      const workerBalanceBefore = await ethers.provider.getBalance(accounts[1].address);
+      
+      await adapter.transfer("some spent topic", 100);
+      
+      const balanceAfter = await ethers.provider.getBalance(contract.getAddress());
+      const workerBalanceAfter = await ethers.provider.getBalance(accounts[1].address);
+
+      const topic = await contract.getTopic("some spent topic");
+      
+      expect(balanceAfter).to.be.equal(balanceBefore - 100n);
+      expect(workerBalanceAfter).to.be.equal(workerBalanceBefore + 100n);
+      expect(topic.status).to.be.equal(Status.SPENT);
     });
 
     

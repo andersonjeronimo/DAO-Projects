@@ -10,6 +10,16 @@ contract CondominiumAdapter {
     ICondominium private implementation;
     address public immutable owner;
 
+    //EVENTS
+    event QuotaChanged(uint amount);
+    event ManagerChanged(address manager);
+    event TopicChanged(
+        bytes32 indexed topicId,
+        string title,
+        Lib.Status indexed status
+    );
+    event TransferEvent(address to, uint indexed amount, string topic);
+
     constructor() {
         owner = msg.sender;
     }
@@ -19,6 +29,7 @@ contract CondominiumAdapter {
         _;
     }
 
+    //TODO: transferir saldo da implementação anterior para a nova
     function upgrade(address newImpl) external {
         require(msg.sender == owner, "You do not have permission");
         implementation = ICondominium(newImpl);
@@ -66,21 +77,23 @@ contract CondominiumAdapter {
         uint amount,
         address accountable
     ) external upgraded {
-        return
-            implementation.editTopic(
-                topicToEdit,
-                description,
-                amount,
-                accountable
-            );
+        Lib.TopicUpdate memory topic = implementation.editTopic(
+            topicToEdit,
+            description,
+            amount,
+            accountable
+        );
+        emit TopicChanged(topic.id, topic.title, topic.status);
     }
 
     function removeTopic(string memory title) external upgraded {
-        return implementation.removeTopic(title);
+        Lib.TopicUpdate memory topic = implementation.removeTopic(title);
+        emit TopicChanged(topic.id, topic.title, topic.status);
     }
 
     function openVoting(string memory title) external upgraded {
-        return implementation.openVoting(title);
+        Lib.TopicUpdate memory topic = implementation.openVoting(title);
+        emit TopicChanged(topic.id, topic.title, topic.status);
     }
 
     function vote(string memory title, Lib.Options option) external upgraded {
@@ -88,12 +101,24 @@ contract CondominiumAdapter {
     }
 
     function closeVoting(string memory title) external upgraded {
-        return implementation.closeVoting(title);
+        Lib.TopicUpdate memory topic = implementation.closeVoting(title);
+        emit TopicChanged(topic.id, topic.title, topic.status);
+
+        if (topic.status == Lib.Status.APPROVED) {
+            if (topic.category == Lib.Category.CHANGE_MANAGER) {
+                emit ManagerChanged(implementation.getManager());
+            } else if (topic.category == Lib.Category.CHANGE_QUOTA) {
+                emit QuotaChanged(implementation.getQuota());
+            }
+        }
     }
 
-    //function numberOfVotes(string memory title) external;
+    function payQuota(uint16 residenceId) external payable upgraded {
+        return implementation.payQuota{value: msg.value}(residenceId);
+    }
 
-    //TODO: function to set quota
-    //TODO: function to pay quota
-    //TODO: function to transfer
+    function transfer(string memory topicTitle, uint amount) external upgraded {
+        Lib.TransferReceipt memory receipt = implementation.transfer(topicTitle, amount);
+        emit TransferEvent(receipt.to, receipt.amount, receipt.topic);
+    }
 }

@@ -10,23 +10,36 @@ interface ICondominium {
 
     function removeResident(address resident) external;
 
-    function setCouncelor(address resident, bool isEntering) external;    
-    
-    function editTopic(string memory topicToEdit, string memory description, uint amount, address accountable) external; 
-    
-    function addTopic(string memory title, string memory description, Lib.Category category, uint amount, address accountable) external;
+    function setCouncelor(address resident, bool isEntering) external;
 
-    function removeTopic(string memory title) external;
+    function editTopic(
+        string memory topicToEdit,
+        string memory description,
+        uint amount,
+        address accountable
+    ) external returns(Lib.TopicUpdate memory);
 
-    function openVoting(string memory title) external;
+    function addTopic(
+        string memory title,
+        string memory description,
+        Lib.Category category,
+        uint amount,
+        address accountable
+    ) external;
+
+    function removeTopic(string memory title) external returns(Lib.TopicUpdate memory);
+
+    function openVoting(string memory title) external returns(Lib.TopicUpdate memory);
 
     function vote(string memory title, Lib.Options option) external;
 
-    function closeVoting(string memory title) external;
+    function closeVoting(string memory title) external returns(Lib.TopicUpdate memory);
 
-    //function numberOfVotes(string memory title) external;
+    function payQuota(uint16 residenceId) external payable;
 
-    //TODO: function to set quota
-    //TODO: function to pay quota
-    //TODO: function to transfer
+    function transfer(string memory topicTitle, uint amount) external returns(Lib.TransferReceipt memory);
+
+    function getManager() external view returns(address);
+
+    function getQuota() external view returns(uint);
 }
