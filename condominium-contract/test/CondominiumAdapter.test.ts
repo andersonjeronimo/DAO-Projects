@@ -23,7 +23,8 @@ describe("Condominium Adapter tests", function () {
     VOTING = 1,
     APPROVED = 2,
     DENIED = 3,
-    SPENT = 4
+    DELETED = 4,
+    SPENT = 5
   }
 
   //2 bl 5 and 4 apt
@@ -75,7 +76,7 @@ describe("Condominium Adapter tests", function () {
       const { contract } = await loadFixture(deployImplementationFixture);
       const contractAddress = await contract.getAddress();
       await adapter.upgrade(contractAddress);
-      await adapter.addResident(accounts[1].address, 1301);      
+      await adapter.addResident(accounts[1].address, 1301);
       expect(await contract.isResident(accounts[1].address)).to.equal(true);
     });
 
@@ -105,7 +106,7 @@ describe("Condominium Adapter tests", function () {
       const { contract } = await loadFixture(deployImplementationFixture);
       const contractAddress = await contract.getAddress();
       await adapter.upgrade(contractAddress);
-      await adapter.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);      
+      await adapter.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
       expect(await contract.topicExists("topic 1")).to.equal(true);
     });
 
@@ -126,10 +127,35 @@ describe("Condominium Adapter tests", function () {
       expect(await contract.numberOfVotes("topic 1")).to.be.equal(1);
     });
 
+    it("Should close voting", async function () {
+      const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
+      const { contract } = await loadFixture(deployImplementationFixture);
+      const contractAddress = await contract.getAddress();
+      await adapter.upgrade(contractAddress);
+
+      for (let index = 0; index < 5; index++) {
+        await adapter.addResident(accounts[index + 1].address, residences[index]);
+      }
+
+      await adapter.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
+      await adapter.openVoting("topic 1");
+
+      let instance: CondominiumAdapter;
+      for (let index = 0; index < 5; index++) {
+        instance = adapter.connect(accounts[index + 1]);
+        await instance.payQuota(residences[index], { value: ethers.parseEther("0.01") });
+        await instance.vote("topic 1", Options.YES);
+      }
+
+      await adapter.closeVoting("topic 1");
+      const topic = await contract.getTopic("topic 1");
+      expect(topic.status).to.be.equal(Status.APPROVED);
+    });
+
     it("Should transfer", async function () {
       const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
       const { contract } = await loadFixture(deployImplementationFixture);
-      const contractAddress = await contract.getAddress();      
+      const contractAddress = await contract.getAddress();
       await adapter.upgrade(contractAddress);
 
       for (let index = 0; index < 10; index++) {
@@ -150,20 +176,71 @@ describe("Condominium Adapter tests", function () {
 
       const balanceBefore = await ethers.provider.getBalance(contract.getAddress());
       const workerBalanceBefore = await ethers.provider.getBalance(accounts[1].address);
-      
+
       await adapter.transfer("some spent topic", 100);
-      
+
       const balanceAfter = await ethers.provider.getBalance(contract.getAddress());
       const workerBalanceAfter = await ethers.provider.getBalance(accounts[1].address);
 
       const topic = await contract.getTopic("some spent topic");
-      
+
       expect(balanceAfter).to.be.equal(balanceBefore - 100n);
       expect(workerBalanceAfter).to.be.equal(workerBalanceBefore + 100n);
       expect(topic.status).to.be.equal(Status.SPENT);
     });
 
-    
+    it.only("Should emit event (CHANGE MANAGER)", async function () {
+      const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
+      const { contract } = await loadFixture(deployImplementationFixture);
+      const contractAddress = await contract.getAddress();
+      await adapter.upgrade(contractAddress);
+
+      for (let index = 0; index < 15; index++) {
+        await adapter.addResident(accounts[index + 1].address, residences[index]);
+      }
+
+      await adapter.addTopic("change manager", "lorem ipsum", Category.CHANGE_MANAGER, 0, accounts[1].address);
+      await adapter.openVoting("change manager");
+
+      let instance: CondominiumAdapter;
+      for (let index = 0; index < 15; index++) {
+        instance = adapter.connect(accounts[index + 1]);
+        await instance.payQuota(residences[index], { value: ethers.parseEther("0.01") });
+        await instance.vote("change manager", Options.YES);
+      }
+      //......................event args
+      //event ManagerChanged(address manager);
+      await expect(adapter.closeVoting("change manager")).to.emit(adapter, "ManagerChanged").withArgs(accounts[1].address);
+      //expect(await contract.getManager()).to.be.equal(accounts[1].address);
+    });
+
+    it.only("Should emit event (CHANGE QUOTA)", async function () {
+      const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
+      const { contract } = await loadFixture(deployImplementationFixture);
+      const contractAddress = await contract.getAddress();
+      await adapter.upgrade(contractAddress);
+
+      for (let index = 0; index < 20; index++) {
+        await adapter.addResident(accounts[index].address, residences[index]);
+      }
+
+      await adapter.addTopic("change quota", "lorem ipsum", Category.CHANGE_QUOTA, 100, manager);
+      await adapter.openVoting("change quota");
+
+      let instance: CondominiumAdapter;
+      for (let index = 0; index < 20; index++) {
+        instance = adapter.connect(accounts[index]);
+        await instance.payQuota(residences[index], { value: ethers.parseEther("0.01") });
+        await instance.vote("change quota", Options.YES);
+      }
+      //....................event args
+      //event QuotaChanged(uint amount);
+      await expect(adapter.closeVoting("change quota")).to.emit(adapter, "QuotaChanged").withArgs(100);
+      //expect(await contract.getQuota()).to.be.equal(100);
+    });
+
+
+
 
 
   });

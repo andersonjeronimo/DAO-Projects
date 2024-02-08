@@ -1,22 +1,22 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  const Condominium = await ethers.getContractFactory("Condominium");
+  const contract = await Condominium.deploy();
 
-  const lockedAmount = ethers.parseEther("0.001");
+  await contract.waitForDeployment();
+  const contractAddress = await contract.getAddress();
+  console.log(`Contract deployed to: ${contractAddress}`);
 
-  const lock = await ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
+  const CondominiumAdapter = await ethers.getContractFactory("CondominiumAdapter");
+  const adapter = await CondominiumAdapter.deploy();
 
-  await lock.waitForDeployment();
+  await adapter.waitForDeployment();
+  const adapterAddress = await adapter.getAddress();
+  console.log(`Contract Adapter deployed to: ${adapterAddress}`);
 
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
-  );
+  await adapter.upgrade(contractAddress);
+  console.log(`Contract Adapter upgraded to: ${contractAddress}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -25,3 +25,9 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+/**
+Contract deployed to: 0x023d63d3cE6A58d470e6977759c1220B827e6EAc
+Contract Adapter deployed to: 0x19f6236ca35CFE5e928e12e92e153FA014e079A7
+Contract Adapter upgraded to: 0x023d63d3cE6A58d470e6977759c1220B827e6EAc
+ */

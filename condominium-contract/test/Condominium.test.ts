@@ -23,7 +23,8 @@ describe("Condominium", function () {
     VOTING = 1,
     APPROVED = 2,
     DENIED = 3,
-    SPENT = 4
+    DELETED = 4,
+    SPENT = 5
   }
 
   //2 bl 5 and 4 apt
