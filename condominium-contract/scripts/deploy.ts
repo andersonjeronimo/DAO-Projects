@@ -30,4 +30,8 @@ main().catch((error) => {
 Contract deployed to: 0x023d63d3cE6A58d470e6977759c1220B827e6EAc
 Contract Adapter deployed to: 0x19f6236ca35CFE5e928e12e92e153FA014e079A7
 Contract Adapter upgraded to: 0x023d63d3cE6A58d470e6977759c1220B827e6EAc
+
+Successfully verified contract CondominiumAdapter on the block explorer.
+https://testnet.bscscan.com/address/0x19f6236ca35CFE5e928e12e92e153FA014e079A7#code
+
  */

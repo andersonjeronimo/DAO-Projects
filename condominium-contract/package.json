@@ -7,13 +7,15 @@
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "compile": "npx hardhat compile",
-    "deploy": "npx hardhat run scripts/deploy.ts --network bsctest"
+    "deploy": "npx hardhat run scripts/deploy.ts --network bsctest",
+    "verify": "npx hardhat verify --network bsctest 0x19f6236ca35CFE5e928e12e92e153FA014e079A7"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "dotenv": "^16.4.1",
     "hardhat": "^2.19.4",
     "solidity-coverage": "^0.8.5"
