@@ -170,23 +170,48 @@ contract Condominium is ICondominium {
         return Lib.ResidentPage({residents: result, total: residents.length});
     }
 
+    function _addCounselor(
+        address resident
+    ) private onlyManager validAddress(resident) {
+        require(isResident(resident), "The counselor must be a resident");
+        counselors.push(resident);
+        uint index = _residentIndex[resident];
+        residents[index].isCounselor = true;
+    }
+
+    function _removeCounselor(
+        address resident
+    ) private onlyManager validAddress(resident) {
+        bool found = false;
+        uint counselorIndex = 0;
+        for (uint i = 0; i < counselors.length; i++) {
+            if (counselors[i] == resident) {
+                found = true;
+                counselorIndex = i;
+                break;
+            }
+        }
+        require(found, "Counselor not found");
+        uint last = counselors.length - 1;
+        if (counselorIndex != last) {
+            address lastAddress = counselors[last];
+            counselors[counselorIndex] = lastAddress;
+        }
+        uint index = _residentIndex[resident];
+        residents[index].isCounselor = false;
+        counselors.pop();
+    }
+
+    /// @param resident no array 'residents' a propriedade 'isCounselor' deve ser alterada
+    /// @param isEntering nomeação(true) ou revogação(false)
     function setCounselor(
         address resident,
         bool isEntering
     ) external onlyManager validAddress(resident) {
         if (isEntering) {
-            require(isResident(resident), "The counselor must be a resident");
-            counselors.push(resident);
+            _addCounselor(resident);
         } else {
-            for (uint i = 0; i < counselors.length; i++) {
-                if (counselors[i] == resident) {
-                    uint last = counselors.length - 1;
-                    address temp = counselors[last];
-                    counselors[last] = resident;
-                    counselors[i] = temp;
-                    return counselors.pop();
-                }
-            }
+            _removeCounselor(resident);
         }
     }
 
