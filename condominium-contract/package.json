@@ -8,7 +8,7 @@
     "coverage": "npx hardhat coverage",
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.ts --network bsctest",
-    "verify": "npx hardhat verify --network bsctest 0x19f6236ca35CFE5e928e12e92e153FA014e079A7"
+    "verify": "npx hardhat verify --network bsctest 0x815D76923b60757c75C3881308cd2087d3949683"
   },
   "keywords": [],
   "author": "",
