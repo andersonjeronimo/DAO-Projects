@@ -1,4 +1,4 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Condominium } from "../typechain-types";
@@ -71,7 +71,7 @@ describe("Condominium", function () {
     it("Should NOT remove accounts (is councelor)", async function () {
       const { contract, manager, accounts } = await loadFixture(deployFixture);
       await contract.addResident(accounts[1].address, 2102);
-      await contract.setCouncelor(accounts[1].address, true);
+      await contract.setCounselor(accounts[1].address, true);
       await expect(contract.removeResident(accounts[1].address)).to.revertedWith("A councelor cannot be removed");
     });
 
@@ -173,11 +173,13 @@ describe("Condominium", function () {
     it("Should NOT vote (topic does not exists)", async function () {
       const { contract, manager, accounts } = await loadFixture(deployFixture);
       await contract.addResident(accounts[1].address, 2102);
-      //await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
-      //await contract.openVoting("topic 1");
+      await contract.addTopic("topic 1", "lorem ipsum", Category.DECISION, 0, manager);
+      await contract.openVoting("topic 1");
+
       const instance = contract.connect(accounts[1]);
       await instance.payQuota(2102, { value: ethers.parseEther("0.01") });
-      await expect(instance.vote("topic 1", Options.YES)).to.revertedWith("The topic does not exists");
+      
+      await expect(instance.vote("topic 2", Options.YES)).to.revertedWith("Topic does not exists");
     });
 
     it("Should NOT vote (permission)", async function () {
@@ -245,18 +247,41 @@ describe("Condominium", function () {
 
       const balanceBefore = await ethers.provider.getBalance(contract.getAddress());
       const workerBalanceBefore = await ethers.provider.getBalance(accounts[1].address);
-      
+
       await contract.transfer("some spent topic", 100);
-      
+
       const balanceAfter = await ethers.provider.getBalance(contract.getAddress());
       const workerBalanceAfter = await ethers.provider.getBalance(accounts[1].address);
 
       const topic = await contract.getTopic("some spent topic");
-      
+
       expect(balanceAfter).to.be.equal(balanceBefore - 100n);
       expect(workerBalanceAfter).to.be.equal(workerBalanceBefore + 100n);
       expect(topic.status).to.be.equal(Status.SPENT);
     });
+
+
+    it("Should pay quota", async function () {
+      const { contract, manager, accounts } = await loadFixture(deployFixture);
+
+      await contract.addResident(accounts[1].address, residences[1]);     
+      let instance: Condominium = contract.connect(accounts[1]);
+      await instance.payQuota(residences[1], { value: ethers.parseEther("0.01") });
+      const resident = await contract.getResident(accounts[1].address);
+      // pay again, 31 days after
+      await time.setNextBlockTimestamp(parseInt(`${(Date.now() / 1000) + (31 * 24 * 60 * 60)}`));
+      await instance.payQuota(residences[1], { value: ethers.parseEther("0.01") });
+      const residentAfter = await contract.getResident(accounts[1].address);
+
+      const oneMonth = BigInt(30*24*60*60);
+      const residentNextPayment = resident.nextPayment + oneMonth;
+
+      expect(residentAfter.nextPayment).to.be.equal(residentNextPayment);
+    });
+
+
+
+
 
 
 

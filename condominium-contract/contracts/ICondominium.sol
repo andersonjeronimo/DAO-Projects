@@ -10,7 +10,7 @@ interface ICondominium {
 
     function removeResident(address resident) external;
 
-    function setCouncelor(address resident, bool isEntering) external;
+    function setCounselor(address resident, bool isEntering) external;
 
     function editTopic(
         string memory topicToEdit,
@@ -50,4 +50,6 @@ interface ICondominium {
     function getTopic(string memory title) external view returns(Lib.Topic memory);
 
     function getTopics(uint page, uint pageSize) external view returns (Lib.TopicPage memory);
+
+    function getVotes(string memory topicTitle) external view returns (Lib.Vote[] memory);
 }

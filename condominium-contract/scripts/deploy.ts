@@ -27,17 +27,18 @@ main().catch((error) => {
 });
 
 /**
------NEW (12Fev2024)
-Contract deployed to: 0xfdb83651687468132dc906d9F935D41Ce42eb60E
-Contract Adapter deployed to: 0x815D76923b60757c75C3881308cd2087d3949683
-Contract Adapter upgraded to: 0xfdb83651687468132dc906d9F935D41Ce42eb60E
+-----NEW DEPLOY (18Fev2024)
+Contract deployed to: 0x5C056a2900706C7053d9bb677259f6BcD22aCD4F
+Contract Adapter deployed to: 0x6aC9439e284dbeAb24a8cEd5dcB216004f3C39b9
+Contract Adapter upgraded to: 0x5C056a2900706C7053d9bb677259f6BcD22aCD4F
 
+-----NEW VERIFY (18Fev2024)
 For more information, visit https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify#verifying-on-sourcify
 Successfully submitted source code for contract
-contracts/CondominiumAdapter.sol:CondominiumAdapter at 0x815D76923b60757c75C3881308cd2087d3949683
+contracts/CondominiumAdapter.sol:CondominiumAdapter at 0x6aC9439e284dbeAb24a8cEd5dcB216004f3C39b9
 for verification on the block explorer. Waiting for verification result...
 
 Successfully verified contract CondominiumAdapter on the block explorer.
-https://testnet.bscscan.com/address/0x815D76923b60757c75C3881308cd2087d3949683#code
+https://testnet.bscscan.com/address/0x6aC9439e284dbeAb24a8cEd5dcB216004f3C39b9#code
 
  */

@@ -1,15 +1,15 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 
-function Transfer() {
-    return(
+function Quota() {
+    return (
         <>
         <Sidebar></Sidebar>
             <div>
-                Transfer
+                Quota
             </div>
         </>
     );
 }
 
-export default Transfer;
+export default Quota;

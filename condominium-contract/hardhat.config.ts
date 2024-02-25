@@ -6,15 +6,24 @@ import "@nomicfoundation/hardhat-toolbox";
 import "solidity-coverage";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.19",
-  defaultNetwork: "local",
+  solidity: {
+    version: "0.8.19",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1000
+      }
+    }
+  },
+  defaultNetwork: "hardhat",
   networks: {
     local: {
       url: "http://127.0.0.1:8545",
       chainId: parseInt(`${process.env.CHAIN_ID_LOCAL}`),
       accounts: {
         mnemonic: "test test test test test test test test test test test junk",
-      }
+      },
+      blockGasLimit: 1099511627775
     },
     sepolia: {
       url: process.env.INFURA_URL,
@@ -29,11 +38,11 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: process.env.SECRET,
       }
-    }   
+    }
   },
   etherscan: {
     apiKey: process.env.API_KEY_BSCSCAN
-  }  
+  }
 };
 
 export default config;

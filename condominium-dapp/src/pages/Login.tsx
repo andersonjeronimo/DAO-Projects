@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doLogin } from '../services/EthersService';
+import { doLogin, doLogout } from '../services/EthersService';
+import { Profile } from '../services/EthersService';
 
 function Login() {
 
-  const navigate = useNavigate();  
+  const navigate = useNavigate();
   const [message, setMessage] = useState<string>("");
-  
+
   function btnLoginClick() {
     doLogin()
       .then(result => {
-        setMessage(result.account);
-        navigate("/topics");
+        if (result.profile !== Profile.UNAUTHORIZED) {          
+          navigate("/home");
+        } else {
+          setMessage("Account unauthorized. Disconnect your Metamask and do Sign In again");
+        }
       })
       .catch(err => {
         setMessage(err.code);
@@ -56,7 +60,7 @@ function Login() {
           </div>
         </div>
         <footer className="footer position-absolute bottom-2 py-2 w-100">
-          <div className="container">
+          {/* <div className="container">
             <div className="row align-items-center justify-content-lg-between">
               <div className="col-12 col-md-6 my-auto">
                 <div className="copyright text-center text-sm text-white text-lg-start">
@@ -85,7 +89,7 @@ function Login() {
                 </ul>
               </div>
             </div>
-          </div>
+          </div> */}
         </footer>
       </div>
     </main>

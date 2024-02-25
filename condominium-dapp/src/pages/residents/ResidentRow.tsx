@@ -1,11 +1,11 @@
 import React from "react";
 
-function Topics() {
+function ResidentRow() {
     return (
         <div>
-            Topics Page
+            Resident Row
         </div>
     );
 }
 
-export default Topics;
+export default ResidentRow;

@@ -1,15 +1,15 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 
-function Transfer() {
-    return(
+function Profile() {
+    return (
         <>
         <Sidebar></Sidebar>
             <div>
-                Transfer
+                Profile
             </div>
         </>
     );
 }
 
-export default Transfer;
+export default Profile;

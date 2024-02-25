@@ -91,14 +91,16 @@ describe("Condominium Adapter tests", function () {
       expect(await contract.isResident(accounts[1].address)).to.equal(false);
     });
 
-    it("Should set councelor", async function () {
+    it("Should set counselor", async function () {
       const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
       const { contract } = await loadFixture(deployImplementationFixture);
       const contractAddress = await contract.getAddress();
       await adapter.upgrade(contractAddress);
       await adapter.addResident(accounts[1].address, 1301);
-      await adapter.setCouncelor(accounts[1].address, true);
-      expect(await contract.counselors(accounts[1].address)).to.equal(true);
+      await adapter.setCounselor(accounts[1].address, true);
+      const resident = await contract.getResident(accounts[1].address);
+
+      expect(resident.isCounselor).to.equal(true);
     });
 
     it("Should add topic", async function () {
@@ -189,7 +191,7 @@ describe("Condominium Adapter tests", function () {
       expect(topic.status).to.be.equal(Status.SPENT);
     });
 
-    it.only("Should emit event (CHANGE MANAGER)", async function () {
+    it("Should emit event (CHANGE MANAGER)", async function () {
       const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
       const { contract } = await loadFixture(deployImplementationFixture);
       const contractAddress = await contract.getAddress();
@@ -214,7 +216,7 @@ describe("Condominium Adapter tests", function () {
       //expect(await contract.getManager()).to.be.equal(accounts[1].address);
     });
 
-    it.only("Should emit event (CHANGE QUOTA)", async function () {
+    it("Should emit event (CHANGE QUOTA)", async function () {
       const { adapter, manager, accounts } = await loadFixture(deployAdapterFixture);
       const { contract } = await loadFixture(deployImplementationFixture);
       const contractAddress = await contract.getAddress();

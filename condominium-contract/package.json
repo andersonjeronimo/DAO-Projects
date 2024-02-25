@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx hardhat test",
+    "test": "npx hardhat test --network hardhat",
     "coverage": "npx hardhat coverage",
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.ts --network bsctest",
-    "verify": "npx hardhat verify --network bsctest 0x815D76923b60757c75C3881308cd2087d3949683"
+    "verify": "npx hardhat verify --network bsctest 0x6aC9439e284dbeAb24a8cEd5dcB216004f3C39b9"
   },
   "keywords": [],
   "author": "",

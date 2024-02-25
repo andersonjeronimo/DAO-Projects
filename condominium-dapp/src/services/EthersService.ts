@@ -6,7 +6,16 @@ const ADAPTER_ADDRESS = `${process.env.REACT_APP_ADAPTER_ADDRESS}`;
 export enum Profile {
     RESIDENT = 0,
     COUNSELOR = 1,
-    MANAGER = 2
+    MANAGER = 2,
+    UNAUTHORIZED = 3
+}
+
+export type Resident = {
+    wallet: string,
+    isCouselor: boolean,
+    isManager: boolean,
+    residence: number,
+    nextPayment: number
 }
 
 /* export enum LocalStorageItem {
@@ -21,6 +30,11 @@ export default LocalStorageMap; */
 export type LoginResult = {
     account: string,
     profile: Profile
+}
+
+function getProfile():Profile {
+    const profile = localStorage.getItem("dao_profile") || "0";
+    return parseInt(profile);
 }
 
 function getProvider(): ethers.BrowserProvider {
@@ -38,7 +52,17 @@ function getContract(provider?: ethers.BrowserProvider): ethers.Contract {
     return new ethers.Contract(ADAPTER_ADDRESS, ABI as ethers.InterfaceAbi, provider);
 }
 
+async function getContractSigner(provider?: ethers.BrowserProvider): Promise<ethers.Contract> {
+    if (!provider) {
+        provider = getProvider();
+    }
+    const signer = await provider.getSigner(localStorage.getItem("account") || undefined);
+    const contract = new ethers.Contract(ADAPTER_ADDRESS, ABI as ethers.InterfaceAbi, provider);
+    return contract.connect(signer) as ethers.Contract;
+}
+
 export async function doLogin(): Promise<LoginResult> {
+    doLogout();
     const provider = getProvider();
     const accounts = await provider.send("eth_requestAccounts", []);
     if (!accounts || !accounts.length) {
@@ -46,15 +70,25 @@ export async function doLogin(): Promise<LoginResult> {
     }
 
     const contract = getContract(provider);
-    const manager = (await contract.getManager()) as string;
-    const isManager = manager.toUpperCase() === accounts[0].toUpperCase();
+    const resident = (await contract.getResident(accounts[0])) as Resident;
+    let isManager = false;
 
-    if (isManager) {
-        localStorage.setItem("dao_profile", `${Profile.MANAGER}`);
-        //localStorage.setItem(LocalStorageMap.get(LocalStorageItem.PROFILE)!, `${Profile.MANAGER}`);
+
+    if (resident.residence > 0) {
+        if (resident.isCouselor)
+            localStorage.setItem("dao_profile", `${Profile.COUNSELOR}`);
+        else if (resident.isManager)
+            localStorage.setItem("dao_profile", `${Profile.MANAGER}`);
+        else localStorage.setItem("dao_profile", `${Profile.RESIDENT}`);
     } else {
-        localStorage.setItem("dao_profile", `${Profile.RESIDENT}`);
-        //localStorage.setItem(LocalStorageMap.get(LocalStorageItem.PROFILE)!, `${Profile.RESIDENT}`);
+        const manager = (await contract.getManager()) as string;
+        isManager = manager.toUpperCase() === accounts[0].toUpperCase();
+        if (isManager) {
+            localStorage.setItem("dao_profile", `${Profile.MANAGER}`);
+        } else {
+            localStorage.setItem("dao_profile", `${Profile.UNAUTHORIZED}`);
+            //throw new Error("Unauthorized");
+        }
     }
 
     localStorage.setItem("metamask_account", accounts[0]);
@@ -67,4 +101,17 @@ export async function doLogin(): Promise<LoginResult> {
 export function doLogout() {
     localStorage.removeItem("metamask_account");
     localStorage.removeItem("dao_profile");
+}
+
+export async function getAddress(): Promise<string> {
+    const contract = getContract();
+    return contract.getImplementationAddress();//getAddress();
+}
+
+export async function upgrade(address: string): Promise<ethers.Transaction> {
+    if (getProfile() !== Profile.MANAGER) {
+        throw new Error(`You do not have permission`);
+    }
+    const contract = await getContractSigner();
+    return await contract.upgrade(address) as ethers.Transaction;
 }
