@@ -1,15 +1,27 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
+import Alert from "../../components/Alert";
 
 function Residents() {
 
-    const [message, setMessage] = useState<string>("Messages here...");
+    const [message, setMessage] = useState<string>("");
+    const [error, setError] = useState<string>("");
 
-    function btnSaveClick() {
-        setMessage("clicou");
+    function useQuery() {
+        return new URLSearchParams(useLocation().search);
     }
+
+    const query = useQuery();
+
+    useEffect(()=>{
+        const tx = query.get("tx");
+        if (tx) {
+            setMessage("Your transaction is being processed. It may take some minutes to have effect.")
+        }
+    }, []);
 
     return (
         <>
@@ -29,6 +41,21 @@ function Residents() {
                                     </div>
                                 </div>
                                 <div className="card-body px-0 pb-2">
+                                    {
+                                        message ? (
+                                            <Alert type="success" text={`Success! ${message}`} icon="thumb_up"></Alert>
+                                        ) : (
+                                            <></>
+                                        )
+                                    }
+                                    {
+                                        error ? (
+                                            <Alert type="danger" text={`Error: ${error}`} icon="error"></Alert>
+                                        ) : (
+                                            <></>
+                                        )
+                                    }
+
                                     <div className="table-responsive p-0">
                                         <table className="table align-items-center mb-0">
                                             <thead>

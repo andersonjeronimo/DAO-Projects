@@ -12,7 +12,7 @@ export enum Profile {
 
 export type Resident = {
     wallet: string,
-    isCouselor: boolean,
+    isCounselor: boolean,
     isManager: boolean,
     residence: number,
     nextPayment: number
@@ -32,9 +32,18 @@ export type LoginResult = {
     profile: Profile
 }
 
-function getProfile():Profile {
+function getProfile(): Profile {
     const profile = localStorage.getItem("dao_profile") || "0";
     return parseInt(profile);
+}
+
+export function isManagerOrCounselor(): boolean {
+    const profile = parseInt(localStorage.getItem("dao_profile") || "0");
+    return profile === Profile.MANAGER || profile === Profile.COUNSELOR;
+}
+
+export function isAddressValid(address:string) : boolean {
+    return ethers.isAddress(address);
 }
 
 function getProvider(): ethers.BrowserProvider {
@@ -75,7 +84,7 @@ export async function doLogin(): Promise<LoginResult> {
 
 
     if (resident.residence > 0) {
-        if (resident.isCouselor)
+        if (resident.isCounselor)
             localStorage.setItem("dao_profile", `${Profile.COUNSELOR}`);
         else if (resident.isManager)
             localStorage.setItem("dao_profile", `${Profile.MANAGER}`);
@@ -114,4 +123,12 @@ export async function upgrade(address: string): Promise<ethers.Transaction> {
     }
     const contract = await getContractSigner();
     return await contract.upgrade(address) as ethers.Transaction;
+}
+
+export async function addResident(wallet: string, residenceId: number): Promise<ethers.Transaction> {
+    if (getProfile() === Profile.RESIDENT) {
+        throw new Error(`You do not have permission`);
+    }
+    const contract = await getContractSigner();
+    return await contract.addResident(wallet, residenceId) as ethers.Transaction;
 }

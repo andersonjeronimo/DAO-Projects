@@ -10,12 +10,12 @@ function Settings() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     function btnSaveClick() {
-        //setIsLoading(true);
+        setIsLoading(true);
         setMessage("Saving data...wait...");
         upgrade(contrat)
             .then(tx => setMessage("Settings saved. It may take some minutes to have effect"))
             .catch(err => setMessage(err.message))
-        setIsLoading(false);
+        setIsLoading(false);        
     }
 
     useEffect(() => {
