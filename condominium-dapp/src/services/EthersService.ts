@@ -32,6 +32,8 @@ export type LoginResult = {
     profile: Profile
 }
 
+
+
 function getProfile(): Profile {
     const profile = localStorage.getItem("dao_profile") || "0";
     return parseInt(profile);
@@ -42,7 +44,7 @@ export function isManagerOrCounselor(): boolean {
     return profile === Profile.MANAGER || profile === Profile.COUNSELOR;
 }
 
-export function isAddressValid(address:string) : boolean {
+export function isAddressValid(address: string): boolean {
     return ethers.isAddress(address);
 }
 
@@ -115,6 +117,25 @@ export function doLogout() {
 export async function getAddress(): Promise<string> {
     const contract = getContract();
     return contract.getImplementationAddress();//getAddress();
+}
+
+export type ResidentPage = {
+    residents: Resident[];
+    total: number;
+}
+
+export async function getResidents(page: number = 1, pageSize: number = 10): Promise<ResidentPage> {
+    const contract = getContract();
+    const result = await contract.getResidents(page, pageSize) as ResidentPage;
+    const residents = result.residents.filter(r => r.residence > 0).sort((a, b) => {
+        if (a.residence > b.residence) return 1;
+        return -1;
+    })
+    return {
+        residents,
+        total: result.total
+
+    } as ResidentPage;
 }
 
 export async function upgrade(address: string): Promise<ethers.Transaction> {

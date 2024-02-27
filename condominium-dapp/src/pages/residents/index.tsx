@@ -4,11 +4,15 @@ import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
+import ResidentRow from "./ResidentRow";
+import { Resident, getResidents } from "../../services/EthersService";
 
 function Residents() {
 
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
+    const [residents, setResidents] = useState<Resident[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     function useQuery() {
         return new URLSearchParams(useLocation().search);
@@ -16,7 +20,17 @@ function Residents() {
 
     const query = useQuery();
 
-    useEffect(()=>{
+    useEffect(() => {
+        setIsLoading(true);
+        getResidents()
+            .then(result => {
+                setResidents(result.residents);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                setIsLoading(false);
+                setError(err.message);
+            });
         const tx = query.get("tx");
         if (tx) {
             setMessage("Your transaction is being processed. It may take some minutes to have effect.")
@@ -55,48 +69,35 @@ function Residents() {
                                             <></>
                                         )
                                     }
-
+                                    {
+                                        isLoading ? (
+                                            <div className="row ms-3">
+                                                <div className="col-md-6 mb-3">
+                                                    <p>
+                                                        <i className="material-icons opacity-10 me-2">hourglass_empty</i>
+                                                        Loading...
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : <div></div>
+                                    }
                                     <div className="table-responsive p-0">
                                         <table className="table align-items-center mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Resident</th>
-                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Function</th>
-                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                                    <th className="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Employed</th>
-                                                    <th className="text-secondary opacity-7"></th>
+                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Wallet</th>
+                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Residence</th>
+                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Is Counselor?</th>
+                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Next Payment</th>
+                                                    <th className="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <td>
-                                                        <div className="d-flex px-2 py-1">
-                                                            <div>
-                                                                {/* <img src="../assets/img/team-2.jpg" className="avatar avatar-sm me-3 border-radius-lg" alt="user1"> */}
-                                                            </div>
-                                                            <div className="d-flex flex-column justify-content-center">
-                                                                <h6 className="mb-0 text-sm">John Michael</h6>
-                                                                <p className="text-xs text-secondary mb-0">john@creative-tim.com</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <p className="text-xs font-weight-bold mb-0">Manager</p>
-                                                        <p className="text-xs text-secondary mb-0">Organization</p>
-                                                    </td>
-                                                    <td className="align-middle text-center text-sm">
-                                                        <span className="badge badge-sm bg-gradient-success">Online</span>
-                                                    </td>
-                                                    <td className="align-middle text-center">
-                                                        <span className="text-secondary text-xs font-weight-bold">23/04/18</span>
-                                                    </td>
-                                                    <td className="align-middle">
-                                                        <a href="javascript:;" className="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                                                            Edit
-                                                        </a>
-                                                    </td>
-                                                </tr>
-
+                                                {residents && residents.length ? (
+                                                    residents.map((resident) => <ResidentRow data={resident} onDelete={(wallet: string) => alert(wallet)} />)
+                                                ) : (
+                                                    <></>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
