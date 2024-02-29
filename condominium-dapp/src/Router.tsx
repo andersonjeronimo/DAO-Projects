@@ -64,7 +64,8 @@ function Router() {
                     <Route path="/transfer" element={<Transfer />} />                    
                     <Route path="/quota" element={<Quota />} />
                     <Route path="/residents" element={<Residents />} />
-                    <Route path="/residents/new" element={<ResidentPage />} />
+                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
+                    <Route path="/residents/add" element={<ResidentPage />} />
                     <Route path="/settings" element={<Settings />} />
                 </Route>
                 <Route element={<CounselorRoutes />}>

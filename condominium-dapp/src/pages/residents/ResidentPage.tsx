@@ -1,41 +1,105 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import SwitchInput from "../../components/SwitchInput";
 import Alert from "../../components/Alert";
-import { Resident, addResident, isManagerOrCounselor, isAddressValid } from "../../services/EthersService";
+import { Resident, addResident, isManagerOrCounselor, isAddressValid, doLogout, getResident, setCouselor } from "../../services/EthersService";
+import { toNumber } from "ethers";
 
 function ResidentPage() {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
-    const [resident, setResident] = useState<Resident>({} as Resident);
+    //const [resident, setResident] = useState<Resident>({} as Resident);
+    const [walletField, setWallet] = useState<string>("");
+    const [residenceField, setResidence] = useState<number>(1000);
+    const [counselorCheck, setCouselorCheck] = useState<boolean>(false);    
     const [isManager, setIsManager] = useState<boolean>(false);
 
     const navigate = useNavigate();
+    let { wallet } = useParams();
 
     useEffect(() => {
         setIsManager(isManagerOrCounselor());
     }, []);
 
-    function onResidentChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setResident(prevState => ({ ...prevState, [event.target.id]: event.target.value }));
+    useEffect(() => {
+        if (!isManagerOrCounselor()) {
+            doLogout();
+            navigate("/");
+        } else {
+            if (wallet) {
+                if (!isAddressValid(wallet)) {
+                    setMessage("Invalid Wallet Address.")
+                } else {
+                    setIsManager(true);
+                    setIsLoading(true);
+                    setMessage("");
+                    getResident(wallet)
+                        .then(resident => {
+                            setIsLoading(false);                            
+                            setWallet(resident.wallet);
+                            setResidence(resident.residence);
+                            setCouselorCheck(resident.isCounselor);                            
+                        })
+                        .catch(err => {
+                            setIsLoading(false);
+                            setMessage(err.message);
+                        })
+                }
+            }
+        }
+    }, [wallet]);
+
+    function onResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
+        switch (evt.target.id) {
+            case "wallet":
+                setWallet(evt.target.value);
+                break;
+            case "residence":
+                setResidence(toNumber(evt.target.value));
+                break;
+            case "isCounselor":
+                setCouselorCheck(evt.target.value === "true");
+                break;
+            default:
+                break;
+        }
+        //setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 
-    function btnSaveClick() {        
-        if (isAddressValid(resident.wallet)) {
-            setIsLoading(true);
-            setMessage("Saving resident...wait...");
-            addResident(resident.wallet, resident.residence)
-                .then(tx => navigate("/residents?tx=" + tx.hash))
-                .catch(err => {
-                    setMessage(err.message);
-                    setIsLoading(false);
-                })
+    function btnSaveClick(): void {
+        if (!wallet) {            
+            if (walletField !== "" && residenceField > 0) {
+                if (isAddressValid(walletField)) {
+                    setIsLoading(true);
+                    setMessage("Saving resident...wait...");
+                    addResident(walletField, residenceField)
+                        .then(tx => navigate("/residents?tx=" + tx.hash))
+                        .catch(err => {
+                            setMessage(err.message);
+                            setIsLoading(false);
+                        })
+                } else {
+                    setMessage("Invalid wallet address");
+                }
+            } else {
+                setMessage("Must fill wallet address and residence number");
+            }
         } else {
-            setMessage("Invalid wallet address");
+            if (isAddressValid(walletField)) {
+                setCouselor(walletField, counselorCheck)
+                    .then(tx => navigate("/residents?tx=" + tx.hash))
+                    .catch(err => {
+                        setMessage(err.message);
+                        setIsLoading(false);
+                    })
+            } else {
+                setMessage("Invalid Wallet Address");
+            }
         }
     }
 
@@ -74,7 +138,8 @@ function ResidentPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="wallet">Wallet Address:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="text" className="form-control" id="wallet" value={resident.wallet || ""} placeholder="0x00..." onChange={onResidentChange} />
+                                                        <input type="text" className="form-control" id="wallet" value={walletField || ""} placeholder="0x00..."
+                                                            onChange={onResidentChange} disabled={!!wallet} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -84,7 +149,8 @@ function ResidentPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="residence">Residence ID:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="number" className="form-control" id="residence" value={resident.residence || 1101} placeholder="ex.: 1101" onChange={onResidentChange} />
+                                                        <input type="number" className="form-control" id="residence" value={toNumber(`${residenceField}`) || 1000} placeholder="ex.: 1101"
+                                                            onChange={onResidentChange} disabled={!!wallet} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -99,19 +165,25 @@ function ResidentPage() {
                                                         </button>
                                                         <span className="text-danger">{message}</span>
                                                     </div>
-                                                ) : (                                                   
+                                                ) : (
                                                     <div className="col-md-6 mb-3">
-                                                        <Alert text="Only a MANAGER or a COUNSELOR can add residents." type="danger" icon="warning"></Alert>
+                                                        <Alert text="Only a MANAGER or a COUNSELOR can ADD or EDIT residents." type="danger" icon="warning"></Alert>
                                                     </div>
                                                 )
                                             }
 
                                         </div>
-                                        <div className="row ms-3">
-                                            <div className="col-md-12 mb-3">
-                                                <SwitchInput id="isCounselor" isChecked={resident.isCounselor} onChange={onResidentChange} text="Is Counselor?"></SwitchInput>
-                                            </div>
-                                        </div>
+                                        {
+                                            isManager && wallet ? (
+                                                <div className="row ms-3">
+                                                    <div className="col-md-12 mb-3">
+                                                        <SwitchInput id="isCounselor" isChecked={counselorCheck} onChange={onResidentChange} text="Is Counselor?"></SwitchInput>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <></>
+                                            )
+                                        }
                                     </div>
                                 </div>
                             </div>

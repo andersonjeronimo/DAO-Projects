@@ -1,24 +1,43 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow";
-import { Resident, getResidents } from "../../services/EthersService";
+import { Resident, getResidents, removeResident, isAddressValid } from "../../services/EthersService";
 
-function Residents() {
+function Residents() {    
 
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [residents, setResidents] = useState<Resident[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const navigate = useNavigate();
+
     function useQuery() {
         return new URLSearchParams(useLocation().search);
     }
 
     const query = useQuery();
+
+    function onDeleteResident(wallet: string) {
+        if (isAddressValid(wallet)) {
+            setIsLoading(true);
+            setMessage("");
+            setError("");
+            setMessage("Removing resident...wait...");
+            removeResident(wallet)
+                .then(tx => navigate("/residents?tx=" + tx.hash))
+                .catch(err => {
+                    setIsLoading(false);
+                    setMessage(err.message);
+                })
+        } else {
+            setMessage("Invalid wallet address");
+        }
+    }
 
     useEffect(() => {
         setIsLoading(true);
@@ -94,7 +113,7 @@ function Residents() {
                                             </thead>
                                             <tbody>
                                                 {residents && residents.length ? (
-                                                    residents.map((resident) => <ResidentRow data={resident} onDelete={(wallet: string) => alert(wallet)} />)
+                                                    residents.map((resident) => <ResidentRow data={resident} key={resident.wallet} onDelete={() => onDeleteResident(resident.wallet)} />)
                                                 ) : (
                                                     <></>
                                                 )}
@@ -103,7 +122,7 @@ function Residents() {
                                     </div>
                                     <div className="row ms-3">
                                         <div className="col-md-12 mb-3">
-                                            <a className="btn bg-gradient-dark me-2" href="/residents/new">
+                                            <a className="btn bg-gradient-dark me-2" href="/residents/add">
                                                 <i className="material-icons opacity-10 me-2">add</i>
                                                 Add New Resident
                                             </a>

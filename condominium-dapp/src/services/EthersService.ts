@@ -138,6 +138,12 @@ export async function getResidents(page: number = 1, pageSize: number = 10): Pro
     } as ResidentPage;
 }
 
+export async function getResident(wallet: string): Promise<Resident> {
+    const contract = getContract();
+    const resident = await contract.getResident(wallet) as Resident;
+    return resident;
+}
+
 export async function upgrade(address: string): Promise<ethers.Transaction> {
     if (getProfile() !== Profile.MANAGER) {
         throw new Error(`You do not have permission`);
@@ -152,4 +158,20 @@ export async function addResident(wallet: string, residenceId: number): Promise<
     }
     const contract = await getContractSigner();
     return await contract.addResident(wallet, residenceId) as ethers.Transaction;
+}
+
+export async function removeResident(wallet: string): Promise<ethers.Transaction> {
+    if (getProfile() !== Profile.MANAGER) {
+        throw new Error(`You do not have permission`);
+    }
+    const contract = await getContractSigner();
+    return await contract.removeResident(wallet) as ethers.Transaction;
+}
+
+export async function setCouselor(wallet: string, isEntering:boolean): Promise<ethers.Transaction> {
+    if (getProfile() !== Profile.MANAGER) {
+        throw new Error(`You do not have permission`);
+    }
+    const contract = await getContractSigner();
+    return await contract.setCounselor(wallet, isEntering) as ethers.Transaction;
 }
