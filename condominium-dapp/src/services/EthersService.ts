@@ -121,16 +121,16 @@ export async function getAddress(): Promise<string> {
 
 export type ResidentPage = {
     residents: Resident[];
-    total: number;
+    total: ethers.BigNumberish;
 }
 
-export async function getResidents(page: number = 1, pageSize: number = 10): Promise<ResidentPage> {
+export async function getResidents(page: number, pageSize: number = 10): Promise<ResidentPage> {
     const contract = getContract();
     const result = await contract.getResidents(page, pageSize) as ResidentPage;
-    const residents = result.residents.filter(r => r.residence > 0).sort((a, b) => {
+    const residents = result.residents.filter(r => r.residence > 0);/* .sort((a, b) => {
         if (a.residence > b.residence) return 1;
         return -1;
-    })
+    }) */
     return {
         residents,
         total: result.total
@@ -175,3 +175,16 @@ export async function setCouselor(wallet: string, isEntering:boolean): Promise<e
     const contract = await getContractSigner();
     return await contract.setCounselor(wallet, isEntering) as ethers.Transaction;
 }
+
+//Retorno do getResidents
+/* tuple :  0xAd886e0aeCEbe71C1DA549FccCa811BB2662d91b,1101,false,false,0,
+         0x7C3609F8f734b92084a82E5982CcC5197A4fC63C,1102,false,true,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         0x0000000000000000000000000000000000000000,0,false,false,0,
+         2 */

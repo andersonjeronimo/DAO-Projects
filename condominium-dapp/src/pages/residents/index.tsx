@@ -6,6 +6,8 @@ import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow";
 import { Resident, getResidents, removeResident, isAddressValid } from "../../services/EthersService";
+import { ethers } from "ethers";
+import Pagination from "../../components/Pagination";
 
 function Residents() {    
 
@@ -13,6 +15,7 @@ function Residents() {
     const [error, setError] = useState<string>("");
     const [residents, setResidents] = useState<Resident[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [count, setCount] = useState<ethers.BigNumberish>(0);
 
     const navigate = useNavigate();
 
@@ -21,6 +24,24 @@ function Residents() {
     }
 
     const query = useQuery();
+
+    useEffect(() => {
+        setIsLoading(true);
+        getResidents(parseInt(query.get("page") || "1"))
+            .then(result => {
+                setResidents(result.residents);
+                setCount(result.total);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                setIsLoading(false);
+                setError(err.message);
+            });
+        const tx = query.get("tx");
+        if (tx) {
+            setMessage("Your transaction is being processed. It may take some minutes to have effect.")
+        }
+    }, []);
 
     function onDeleteResident(wallet: string) {
         if (isAddressValid(wallet)) {
@@ -37,24 +58,7 @@ function Residents() {
         } else {
             setMessage("Invalid wallet address");
         }
-    }
-
-    useEffect(() => {
-        setIsLoading(true);
-        getResidents()
-            .then(result => {
-                setResidents(result.residents);
-                setIsLoading(false);
-            })
-            .catch(err => {
-                setIsLoading(false);
-                setError(err.message);
-            });
-        const tx = query.get("tx");
-        if (tx) {
-            setMessage("Your transaction is being processed. It may take some minutes to have effect.")
-        }
-    }, []);
+    }    
 
     return (
         <>
@@ -120,7 +124,8 @@ function Residents() {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="row ms-3">
+                                    <Pagination count={count} pageSize={10}></Pagination>
+                                    <div className="row ms-2">
                                         <div className="col-md-12 mb-3">
                                             <a className="btn bg-gradient-dark me-2" href="/residents/add">
                                                 <i className="material-icons opacity-10 me-2">add</i>
