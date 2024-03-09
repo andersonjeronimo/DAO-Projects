@@ -4,6 +4,7 @@ import helmet from "helmet";
 import "express-async-errors";
 import cors from "cors";
 import errorMiddleware from "./middlewares/error.middleware";
+import residentRouter from "./routers/resident.router";
 
 const app = express();
 app.use(morgan("tiny"));
@@ -13,8 +14,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.use('/residents', residentRouter);
 app.use('/', (req: Request, res: Response, next: NextFunction) => {
-    res.send(`Hello World`);
+    res.send(`Heath Check`);
 });
 
 app.use(errorMiddleware);
