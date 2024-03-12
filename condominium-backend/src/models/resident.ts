@@ -20,5 +20,5 @@ export default class Resident {
         this.phone = phone;
         this.email = email;
         this.profile = profile;
-    }   
+    }
 }

@@ -21,26 +21,15 @@ export async function patchResident(req: Request, res: Response, next: NextFunct
     const wallet = req.params.wallet;
     const resident = req.body as Resident;
     const result = await residentRepository.updateResident(wallet, resident);
-    if (result > 0) {
-        return res.status(204)
-            .json(`Updated ${result} document(s)`);
-    } else {
-        return res.status(404)
-            .json(`Updated ${result} document(s)`);
-    }
+    const httpStatus = result > 0 ? 204 : 404;
+    return res.status(httpStatus).json(`Updated ${result} document(s)`);
 }
 
 export async function deleteResident(req: Request, res: Response, next: NextFunction) {
-    const wallet = req.params.wallet;    
+    const wallet = req.params.wallet;
     const result = await residentRepository.deleteResident(wallet);
-    if (result > 0) {
-        return res.status(204)
-            .json(`Deleted ${result} document(s)`);
-
-    } else {
-        return res.status(404)
-            .json(`Deleted ${result} document(s)`);
-    }
+    const httpStatus = result > 0 ? 204 : 404;
+    return res.status(httpStatus).json(`Deleted ${result} document(s)`);
 }
 
 export default { getResident, postResident, patchResident, deleteResident };

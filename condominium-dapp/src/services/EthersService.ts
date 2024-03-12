@@ -1,6 +1,8 @@
 import { ethers } from "ethers";
 import ABI from './ABI.json';
 
+import { doApiLogin } from "./APIService";
+
 const ADAPTER_ADDRESS = `${process.env.REACT_APP_ADAPTER_ADDRESS}`;
 
 export enum Profile {
@@ -29,7 +31,8 @@ export default LocalStorageMap; */
 
 export type LoginResult = {
     account: string,
-    profile: Profile
+    profile: Profile,
+    token: string
 }
 
 
@@ -103,9 +106,24 @@ export async function doLogin(): Promise<LoginResult> {
     }
 
     localStorage.setItem("metamask_account", accounts[0]);
+
+    /**
+     * Criar secret para geração de token (autenticação híbrida)
+     */
+    const signer = await provider.getSigner();
+    const timestamp = Date.now();
+    const message = `Authenticating... Timestamp: ${timestamp}`;
+    const secret = await signer.signMessage(message);
+    /**
+     * Enviar secret para backend e receber o token gerado
+     */
+    const token = await doApiLogin(accounts[0], secret, timestamp);
+    localStorage.setItem("token", token);
+
     return {
         account: accounts[0],
-        profile: parseInt(localStorage.getItem("dao_profile") || "0")
+        profile: parseInt(localStorage.getItem("dao_profile") || "0"),
+        token: token
     } as LoginResult;
 }
 
@@ -168,7 +186,7 @@ export async function removeResident(wallet: string): Promise<ethers.Transaction
     return await contract.removeResident(wallet) as ethers.Transaction;
 }
 
-export async function setCouselor(wallet: string, isEntering:boolean): Promise<ethers.Transaction> {
+export async function setCouselor(wallet: string, isEntering: boolean): Promise<ethers.Transaction> {
     if (getProfile() !== Profile.MANAGER) {
         throw new Error(`You do not have permission`);
     }
