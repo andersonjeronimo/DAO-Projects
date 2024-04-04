@@ -6,19 +6,20 @@ import cors from "cors";
 import errorMiddleware from "./middlewares/error.middleware";
 import residentRouter from "./routers/resident.router";
 import loginRouter from "./routers/login.router";
+import authenticationMiddleware from "./middlewares/authentication.middleware";
 
 
 const app = express();
 app.use(morgan("tiny"));
 app.use(helmet());
 app.use(cors({
-    origin:process.env.CORS_ORIGIN
+    origin: process.env.CORS_ORIGIN
 }));
 app.use(express.json());
 
 //app.post('/login/', loginRouter);
 app.use('/login/', loginRouter);
-app.use('/residents/', residentRouter);
+app.use('/residents/', authenticationMiddleware, residentRouter);
 
 app.use('/', (req: Request, res: Response, next: NextFunction) => {
     res.send(`Heath Check`);

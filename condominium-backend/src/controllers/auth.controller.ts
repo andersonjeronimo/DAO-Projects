@@ -1,14 +1,9 @@
 
 import { Request, Response, NextFunction } from "express";
 import residentRepository from "../repositories/resident.repository";
+import { LoginData } from "src/utils/utils";
 import { ethers } from "ethers";
 import jwt from "jsonwebtoken";
-
-type LoginData = {
-    timestamp: number;
-    wallet: string;
-    secret: string;
-}
 
 const JWT_SECRET = `${process.env.JWT_SECRET}`;
 const JWT_EXPIRES = parseInt(`${process.env.JWT_EXPIRES}`);

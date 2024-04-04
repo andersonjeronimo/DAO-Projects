@@ -1,10 +1,5 @@
 import { ObjectId } from "mongodb";
-
-export enum Profile {
-    RESIDENT = 0,
-    COUNSELOR = 1,
-    MANAGER = 2
-}
+import { Profile } from "src/utils/utils";
 
 export default class Resident {
     _id?: ObjectId;
