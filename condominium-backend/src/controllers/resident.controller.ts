@@ -4,11 +4,11 @@ import residentRepository from "../repositories/resident.repository";
 
 export async function getResident(req: Request, res: Response, next: NextFunction) {
     const wallet = req.params.wallet;
-    const resident = await residentRepository.getResident(wallet);
-    if (!resident) {
+    const result = await residentRepository.getResident(wallet);
+    if (!result) {
         return res.sendStatus(404);
     }
-    return res.json(resident);
+    return res.status(201).json(result);
 }
 
 export async function postResident(req: Request, res: Response, next: NextFunction) {
