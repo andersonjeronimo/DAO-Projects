@@ -8,7 +8,8 @@ import Topics from "./pages/topics";
 import Residents from "./pages/residents";
 import ResidentPage from "./pages/residents/ResidentPage";
 
-import { Profile as ProfileEnum, doLogout } from "./services/EthersService";
+import { doLogout } from "./services/EthersService";
+import { Profile as ProfileEnum } from "./utils/Utils"
 
 function Router() {
 
@@ -61,7 +62,7 @@ function Router() {
                 </Route>
                 <Route element={<ManagerRoutes />}>
                     <Route path="/topics" element={<Topics />} />
-                    <Route path="/transfer" element={<Transfer />} />                    
+                    <Route path="/transfer" element={<Transfer />} />
                     <Route path="/quota" element={<Quota />} />
                     <Route path="/residents" element={<Residents />} />
                     <Route path="/residents/edit/:wallet" element={<ResidentPage />} />

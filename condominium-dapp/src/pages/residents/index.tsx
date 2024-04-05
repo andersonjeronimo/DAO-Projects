@@ -5,7 +5,8 @@ import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow";
-import { Resident, getResidents, removeResident, isAddressValid } from "../../services/EthersService";
+import { getResidents, removeResident, isAddressValid } from "../../services/EthersService";
+import { Resident } from "../../utils/Utils";
 import { ethers } from "ethers";
 import Pagination from "../../components/Pagination";
 

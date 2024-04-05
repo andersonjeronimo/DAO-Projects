@@ -17,7 +17,7 @@ contract Condominium is ICondominium {
 
     Lib.Resident[] public residents;
 
-    /// @dev waller address -> array index
+    /// @dev wallet address -> array index
     mapping(address => uint) private _residentIndex;
 
     address[] public counselors;
@@ -102,6 +102,7 @@ contract Condominium is ICondominium {
         uint16 residenceId
     ) external onlyCouncil validAddress(resident) {
         require(residenceExists(residenceId), "This residence does not exists");
+        require(!isResident(resident), "This resident already exists");
         residents.push(
             Lib.Resident({
                 wallet: resident,

@@ -1,6 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { Resident, isManagerOrCounselor } from "../../services/EthersService";
+import { isManagerOrCounselor } from "../../services/EthersService";
+import { Resident } from "../../utils/Utils";
 import { ethers } from "ethers";
 
 type Props = {

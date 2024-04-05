@@ -1,41 +1,11 @@
 import { ethers } from "ethers";
 import ABI from './ABI.json';
 
+import { Profile, LoginResult, Resident } from "../utils/Utils";
+
 import { doApiLogin } from "./APIService";
 
 const ADAPTER_ADDRESS = `${process.env.REACT_APP_ADAPTER_ADDRESS}`;
-
-export enum Profile {
-    RESIDENT = 0,
-    COUNSELOR = 1,
-    MANAGER = 2,
-    UNAUTHORIZED = 3
-}
-
-export type Resident = {
-    wallet: string,
-    isCounselor: boolean,
-    isManager: boolean,
-    residence: number,
-    nextPayment: number
-}
-
-/* export enum LocalStorageItem {
-    PROFILE = 0,
-    ACCOUNT = 1
-}
-const LocalStorageMap = new Map<number, string>();
-LocalStorageMap.set(LocalStorageItem.PROFILE, "DAOProfile");
-LocalStorageMap.set(LocalStorageItem.ACCOUNT, "metamaskAccount");
-export default LocalStorageMap; */
-
-export type LoginResult = {
-    account: string,
-    profile: Profile,
-    token: string
-}
-
-
 
 function getProfile(): Profile {
     const profile = localStorage.getItem("dao_profile") || "0";
@@ -130,6 +100,7 @@ export async function doLogin(): Promise<LoginResult> {
 export function doLogout() {
     localStorage.removeItem("metamask_account");
     localStorage.removeItem("dao_profile");
+    localStorage.removeItem("token");
 }
 
 export async function getAddress(): Promise<string> {
