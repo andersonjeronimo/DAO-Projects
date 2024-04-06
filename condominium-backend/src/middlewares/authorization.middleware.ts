@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { LoginData, Profile } from "src/utils/utils";
+import { LoginData, Profile } from "../utils/utils";
 import jwt from "jsonwebtoken";
 
 export function onlyManager(error: Error, req: Request, res: Response, next: NextFunction) {

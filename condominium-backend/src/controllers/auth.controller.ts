@@ -1,7 +1,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import residentRepository from "../repositories/resident.repository";
-import { LoginData } from "src/utils/utils";
+import { LoginData } from "../utils/utils";
 import { ethers } from "ethers";
 import jwt from "jsonwebtoken";
 

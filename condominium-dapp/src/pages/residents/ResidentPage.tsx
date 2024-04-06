@@ -7,15 +7,33 @@ import Sidebar from "../../components/Sidebar";
 import SwitchInput from "../../components/SwitchInput";
 import Alert from "../../components/Alert";
 import { addResident, isManagerOrCounselor, isAddressValid, doLogout, getResident, setCouselor } from "../../services/EthersService";
+import { getApiResident } from "../../services/APIService";
+
+import { Resident, ApiResident } from "../../utils/Utils";
+
+/* export type Resident = {
+    wallet: string,
+    isCounselor: boolean,
+    isManager: boolean,
+    residence: number,
+    nextPayment: number
+}
+
+export type ApiResident = {
+    wallet: string;
+    name: string;
+    profile: Profile;
+    phone?: string;
+    email?: string;
+}
+ */
 
 function ResidentPage() {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [message, setMessage] = useState<string>("");    
-    const [wallet_state, setWallet] = useState<string>("");
-    const [residence_state, setResidence] = useState<number>(1000);
-    const [counselor_state, setCounselor] = useState<boolean>(false);
+    const [message, setMessage] = useState<string>("");
     const [isManager, setIsManager] = useState<boolean>(false);
+    const [resident, setResident] = useState<Resident>({} as Resident);
 
     const navigate = useNavigate();
     let { wallet } = useParams();
@@ -29,43 +47,33 @@ function ResidentPage() {
             if (wallet) {
                 if (!isAddressValid(wallet)) {
                     setMessage("Invalid Wallet Address.")
-                } else {                    
-                    setIsLoading(true);                    
+                } else {
+                    setIsLoading(true);
                     getResident(wallet)
                         .then(resident => {
-                            setIsLoading(false);                            
-                            setWallet(resident.wallet);
-                            setResidence(resident.residence);
-                            setCounselor(resident.isCounselor);
+                            setResident(resident);
+                            setIsLoading(false);                         
                         })
                         .catch(err => {
-                            setIsLoading(false);
                             setMessage(err.message);
+                            setIsLoading(false);
                         })
                 }
             }
         }
     }, [wallet]);
 
-    function handleWalletChange(e: React.ChangeEvent<HTMLInputElement>) {        
-        setWallet(e.target.value);
-    }
-
-    function handleResidenceChange(e: React.ChangeEvent<HTMLInputElement>) {        
-        setResidence(Number(e.target.value));
-    }
-
-    function handleIsCounselorChange(e: React.ChangeEvent<HTMLInputElement>) {        
-        setCounselor(e.target.value === "true");
+    function handleResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {        
+        setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 
     function btnSaveClick(): void {
         if (!wallet) {
-            if (wallet_state !== "" && residence_state > 0) {
-                if (isAddressValid(wallet_state)) {
+            if (resident.wallet !== "" && resident.residence > 0) {
+                if (isAddressValid(resident.wallet)) {
                     setIsLoading(true);
                     setMessage("Saving resident...wait...");
-                    addResident(wallet_state, residence_state)
+                    addResident(resident.wallet, resident.residence)
                         .then(tx => navigate("/residents?tx=" + tx.hash))
                         .catch(err => {
                             setMessage(err.message);
@@ -78,8 +86,8 @@ function ResidentPage() {
                 setMessage("Must fill wallet address and residence number");
             }
         } else {
-            if (isAddressValid(wallet_state)) {
-                setCouselor(wallet_state, counselor_state)
+            if (isAddressValid(resident.wallet)) {
+                setCouselor(resident.wallet, resident.isCounselor)
                     .then(tx => navigate("/residents?tx=" + tx.hash))
                     .catch(err => {
                         setMessage(err.message);
@@ -90,7 +98,7 @@ function ResidentPage() {
             }
         }
     }
-
+ 
     return (
         <>
             <>
@@ -126,8 +134,10 @@ function ResidentPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="wallet">Wallet Address:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="text" className="form-control" id="wallet" value={wallet_state || ""} placeholder="0x00..."
-                                                            onChange={handleWalletChange} disabled={!!wallet} />
+                                                        {/* <input type="text" className="form-control" id="wallet" value={wallet_state || ""} placeholder="0x00..."
+                                                            onChange={handleWalletChange} disabled={!!wallet} /> */}
+                                                        <input type="text" className="form-control" id="wallet" value={resident.wallet} placeholder="0x00..."
+                                                            onChange={handleResidentChange} /* disabled={!!wallet} */ />
                                                     </div>
                                                 </div>
                                             </div>
@@ -137,8 +147,10 @@ function ResidentPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="residence">Residence ID:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="number" className="form-control" id="residence" value={Number(residence_state) || 1000} placeholder="ex.: 1101"
-                                                            onChange={handleResidenceChange} disabled={!!wallet} />
+                                                        {/* <input type="number" className="form-control" id="residence" value={Number(residence_state) || 1000} placeholder="ex.: 1101"
+                                                            onChange={handleResidenceChange} disabled={!!wallet} /> */}
+                                                        <input type="number" className="form-control" id="residence" value={resident.residence} placeholder="ex.: 1101"
+                                                            onChange={handleResidentChange} /* disabled={!!wallet} */ />
                                                     </div>
                                                 </div>
                                             </div>
@@ -165,7 +177,8 @@ function ResidentPage() {
                                             isManager && wallet ? (
                                                 <div className="row ms-3">
                                                     <div className="col-md-12 mb-3">
-                                                        <SwitchInput id="isCounselor" isChecked={counselor_state} onChange={handleIsCounselorChange} text="Is Counselor?"></SwitchInput>
+                                                        {/* <SwitchInput id="isCounselor" isChecked={counselor_state} onChange={handleIsCounselorChange} text="Is Counselor?"></SwitchInput> */}
+                                                        <SwitchInput id="isCounselor" isChecked={resident.isCounselor} onChange={handleResidentChange} text="Is Counselor?"></SwitchInput>
                                                     </div>
                                                 </div>
                                             ) : (

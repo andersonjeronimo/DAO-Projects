@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { Profile } from "src/utils/utils";
+import { Profile } from "../utils/utils";
 
 export default class Resident {
     _id?: ObjectId;

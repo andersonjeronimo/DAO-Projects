@@ -123,14 +123,25 @@ export async function getResidents(page: number, pageSize: number = 10): Promise
     return {
         residents,
         total: result.total
-
     } as ResidentPage;
 }
 
+/**wallet: string,
+    isCounselor: boolean,
+    isManager: boolean,
+    residence: number,
+    nextPayment: number */
+
 export async function getResident(wallet: string): Promise<Resident> {
     const contract = getContract();
-    const resident = await contract.getResident(wallet) as Resident;
-    return resident;
+    const resident = await contract.getResident(wallet);
+    return {
+        wallet: resident.wallet || "",
+        isCounselor: resident.isCounselor || false,
+        isManager: resident.isManager || false,
+        residence: ethers.toNumber(ethers.toBigInt(resident.residence)),
+        nextPayment: resident.nextPayment
+    } as Resident;
 }
 
 export async function upgrade(address: string): Promise<ethers.Transaction> {

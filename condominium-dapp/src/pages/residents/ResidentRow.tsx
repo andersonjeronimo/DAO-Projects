@@ -42,7 +42,8 @@ function ResidentRow(props: Props) {
                 </div>
             </td>
             <td className="align-middle text-center">
-                <p className="text-xs font-weight-bold mb-0 px-3">{ethers.toNumber(ethers.toBigInt(props.data.residence))}</p>
+                {/* <p className="text-xs font-weight-bold mb-0 px-3">{ethers.toNumber(ethers.toBigInt(props.data.residence))}</p> */}
+                <p className="text-xs font-weight-bold mb-0 px-3">{Number(props.data.residence)}</p>
             </td>
             <td className="align-middle text-center">
                 <p className="text-xs font-weight-bold mb-0 px-3">{JSON.stringify(props.data.isCounselor)}</p>

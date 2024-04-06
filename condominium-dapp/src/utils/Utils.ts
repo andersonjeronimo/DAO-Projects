@@ -13,16 +13,16 @@ export type Resident = {
     nextPayment: number
 }
 
-export type LoginResult = {
-    account: string,
-    profile: Profile,
-    token: string
-}
-
 export type ApiResident = {
     wallet: string;
     name: string;
     profile: Profile;
     phone?: string;
     email?: string;
+}
+
+export type LoginResult = {
+    account: string,
+    profile: Profile,
+    token: string
 }
