@@ -7,9 +7,9 @@ import Sidebar from "../../components/Sidebar";
 import SwitchInput from "../../components/SwitchInput";
 import Alert from "../../components/Alert";
 import { addResident, isManagerOrCounselor, isAddressValid, doLogout, getResident, setCouselor } from "../../services/EthersService";
-import { getApiResident } from "../../services/APIService";
+import { getApiResident, addApiResident, updateApiResident } from "../../services/APIService";
 
-import { Resident, ApiResident } from "../../utils/Utils";
+import { Resident, ApiResident, Profile } from "../../utils/Utils";
 
 /* export type Resident = {
     wallet: string,
@@ -30,10 +30,11 @@ export type ApiResident = {
 
 function ResidentPage() {
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<number>(0);
     const [message, setMessage] = useState<string>("");
     const [isManager, setIsManager] = useState<boolean>(false);
     const [resident, setResident] = useState<Resident>({} as Resident);
+    const [apiResident, setApiResident] = useState<ApiResident>({} as ApiResident);
 
     const navigate = useNavigate();
     let { wallet } = useParams();
@@ -48,37 +49,59 @@ function ResidentPage() {
                 if (!isAddressValid(wallet)) {
                     setMessage("Invalid Wallet Address.")
                 } else {
-                    setIsLoading(true);
+                    setIsLoading(1);
                     getResident(wallet)
                         .then(resident => {
                             setResident(resident);
-                            setIsLoading(false);                         
+                            setIsLoading(0);
                         })
                         .catch(err => {
                             setMessage(err.message);
-                            setIsLoading(false);
+                            setIsLoading(0);
+                        })
+
+                    getApiResident(wallet)
+                        .then(apiResident => {
+                            setApiResident(apiResident);
+                            setIsLoading(1);
+                        })
+                        .catch(err => {
+                            setMessage(err.message);
+                            setIsLoading(0);
                         })
                 }
             }
         }
     }, [wallet]);
 
-    function handleResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {        
+    function handleResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
         setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 
+    function handleApiResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
+        setApiResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
+    }
+
     function btnSaveClick(): void {
+        /* console.log(resident);
+        console.log(apiResident);
+        return; */
         if (!wallet) {
             if (resident.wallet !== "" && resident.residence > 0) {
+                //Entra nesse bloco se for adição de moradores
                 if (isAddressValid(resident.wallet)) {
-                    setIsLoading(true);
+                    setIsLoading(1);
                     setMessage("Saving resident...wait...");
-                    addResident(resident.wallet, resident.residence)
-                        .then(tx => navigate("/residents?tx=" + tx.hash))
+                    const promiseBlockchain = addResident(resident.wallet, resident.residence);
+                    const promiseBackend = addApiResident({...apiResident, profile:Profile.RESIDENT, wallet:resident.wallet});
+                    Promise.all([promiseBlockchain, promiseBackend])
+                        .then(results => {
+                            navigate("/residents?tx=" + results[0].hash);
+                        })
                         .catch(err => {
                             setMessage(err.message);
-                            setIsLoading(false);
-                        })
+                            setIsLoading(0);
+                        });
                 } else {
                     setMessage("Invalid wallet address");
                 }
@@ -86,19 +109,28 @@ function ResidentPage() {
                 setMessage("Must fill wallet address and residence number");
             }
         } else {
+            //Entra nesse bloco se for edição apenas
             if (isAddressValid(resident.wallet)) {
-                setCouselor(resident.wallet, resident.isCounselor)
-                    .then(tx => navigate("/residents?tx=" + tx.hash))
+                const profile = resident.isCounselor ? Profile.COUNSELOR : Profile.RESIDENT;
+                const promises = [];
+                if (apiResident.profile !== profile) {
+                    promises.push(setCouselor(resident.wallet, resident.isCounselor));
+                }
+                promises.push(updateApiResident(wallet, {...apiResident, profile, wallet}));
+                Promise.all(promises)
+                    .then(results => {                        
+                        navigate("/residents?tx=" + wallet)
+                    })
                     .catch(err => {
                         setMessage(err.message);
-                        setIsLoading(false);
+                        setIsLoading(0);
                     })
             } else {
                 setMessage("Invalid Wallet Address");
             }
         }
     }
- 
+
     return (
         <>
             <>
@@ -112,13 +144,13 @@ function ResidentPage() {
                                         <div className="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
                                             <h6 className="text-white text-capitalize ps-3">
                                                 <i className="material-icons opacity-10 me-2">person_add</i>
-                                                New Resident
+                                                {wallet ? "Edit " : "New "} Resident
                                             </h6>
                                         </div>
                                     </div>
                                     <div className="card-body px-0 pb-2">
                                         {
-                                            isLoading ? (
+                                            isLoading > 0 ? (
                                                 <div className="row ms-3">
                                                     <div className="col-md-6 mb-3">
                                                         <p>
@@ -134,9 +166,19 @@ function ResidentPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="wallet">Wallet Address:</label>
                                                     <div className="input-group input-group-outline">
-                                                        {/* <input type="text" className="form-control" id="wallet" value={wallet_state || ""} placeholder="0x00..."
-                                                            onChange={handleWalletChange} disabled={!!wallet} /> */}
-                                                        <input type="text" className="form-control" id="wallet" value={resident.wallet} placeholder="0x00..."
+                                                        <input type="text" className="form-control" id="wallet" value={resident.wallet || ""} placeholder="0x00..."
+                                                            onChange={handleResidentChange} disabled={!!wallet} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row ms-3">
+                                            <div className="col-md-6 mb-3">
+                                                <div className="form-group">
+                                                    <label htmlFor="residence">Residence Id:</label>
+                                                    <div className="input-group input-group-outline">
+                                                        <input type="number" className="form-control" id="residence" value={resident.residence || 1000}
+                                                            placeholder="(block + apartment). Ex.: 1101"
                                                             onChange={handleResidentChange} /* disabled={!!wallet} */ />
                                                     </div>
                                                 </div>
@@ -145,12 +187,35 @@ function ResidentPage() {
                                         <div className="row ms-3">
                                             <div className="col-md-6 mb-3">
                                                 <div className="form-group">
-                                                    <label htmlFor="residence">Residence ID:</label>
+                                                    <label htmlFor="name">Name:</label>
                                                     <div className="input-group input-group-outline">
-                                                        {/* <input type="number" className="form-control" id="residence" value={Number(residence_state) || 1000} placeholder="ex.: 1101"
-                                                            onChange={handleResidenceChange} disabled={!!wallet} /> */}
-                                                        <input type="number" className="form-control" id="residence" value={resident.residence} placeholder="ex.: 1101"
-                                                            onChange={handleResidentChange} /* disabled={!!wallet} */ />
+                                                        <input type="text" className="form-control" id="name" value={apiResident.name || ""}
+                                                            placeholder="Your name..."
+                                                            onChange={handleApiResidentChange} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row ms-3">
+                                            <div className="col-md-6 mb-3">
+                                                <div className="form-group">
+                                                    <label htmlFor="name">Phone:</label>
+                                                    <div className="input-group input-group-outline">
+                                                        <input type="tel" className="form-control" id="phone" value={apiResident.phone || ""}
+                                                            placeholder="+5551123456789"
+                                                            onChange={handleApiResidentChange} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row ms-3">
+                                            <div className="col-md-6 mb-3">
+                                                <div className="form-group">
+                                                    <label htmlFor="email">Email:</label>
+                                                    <div className="input-group input-group-outline">
+                                                        <input type="email" className="form-control" id="email" value={apiResident.email || ""}
+                                                            placeholder="name@company.com"
+                                                            onChange={handleApiResidentChange} />
                                                     </div>
                                                 </div>
                                             </div>
