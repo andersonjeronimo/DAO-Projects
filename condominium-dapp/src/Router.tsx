@@ -10,19 +10,20 @@ import ResidentPage from "./pages/residents/ResidentPage";
 
 import { doLogout } from "./services/EthersService";
 import { Profile as ProfileEnum } from "./utils/Utils"
+import { StorageKeys } from "./utils/Utils";
 
 function Router() {
 
     const PrivateRoutes = () => {
-        let isAuth = localStorage.getItem("metamask_account") !== null;
+        let isAuth = localStorage.getItem(StorageKeys.ACCOUNT) !== null;
         return (
             isAuth ? <Outlet /> : <Navigate to="/" />
         )
     }
 
     const ManagerRoutes = () => {
-        let isAuth = localStorage.getItem("metamask_account") !== null;
-        let isManager = parseInt(localStorage.getItem("dao_profile") || "0") === ProfileEnum.MANAGER;
+        let isAuth = localStorage.getItem(StorageKeys.ACCOUNT) !== null;
+        let isManager = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0") === ProfileEnum.MANAGER;
         if (isAuth && isManager) {
             return (<Outlet />)
         } else {
@@ -32,8 +33,8 @@ function Router() {
     }
 
     const CounselorRoutes = () => {
-        let isAuth = localStorage.getItem("metamask_account") !== null;
-        let isCouselor = parseInt(localStorage.getItem("dao_profile") || "0") === ProfileEnum.COUNSELOR;
+        let isAuth = localStorage.getItem(StorageKeys.ACCOUNT) !== null;
+        let isCouselor = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0") === ProfileEnum.COUNSELOR;
         if (isAuth && isCouselor) {
             return (<Outlet />)
         } else {
@@ -43,8 +44,8 @@ function Router() {
     }
 
     const ResidentRoutes = () => {
-        let isAuth = localStorage.getItem("metamask_account") !== null;
-        let isResident = parseInt(localStorage.getItem("dao_profile") || "0") === ProfileEnum.RESIDENT;
+        let isAuth = localStorage.getItem(StorageKeys.ACCOUNT) !== null;
+        let isResident = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0") === ProfileEnum.RESIDENT;
         if (isAuth && isResident) {
             return (<Outlet />)
         } else {
@@ -59,6 +60,14 @@ function Router() {
                 <Route path="/" element={<Login />} />
                 <Route element={<PrivateRoutes />}>
                     <Route path="/home" element={<Home />} />
+                    {/* <Route path="/home" element={<Home />} />
+                    <Route path="/topics" element={<Topics />} />
+                    <Route path="/transfer" element={<Transfer />} />
+                    <Route path="/quota" element={<Quota />} />
+                    <Route path="/residents" element={<Residents />} />
+                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
+                    <Route path="/residents/add" element={<ResidentPage />} />
+                    <Route path="/settings" element={<Settings />} /> */}
                 </Route>
                 <Route element={<ManagerRoutes />}>
                     <Route path="/topics" element={<Topics />} />
@@ -70,10 +79,22 @@ function Router() {
                     <Route path="/settings" element={<Settings />} />
                 </Route>
                 <Route element={<CounselorRoutes />}>
-                    <Route path="/topics" element={<Topics />} />
+                    {/* <Route path="/topics" element={<Topics />} />
+                    <Route path="/transfer" element={<Transfer />} />
+                    <Route path="/quota" element={<Quota />} />
+                    <Route path="/residents" element={<Residents />} />
+                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
+                    <Route path="/residents/add" element={<ResidentPage />} />
+                    <Route path="/settings" element={<Settings />} /> */}
                 </Route>
                 <Route element={<ResidentRoutes />}>
-                    <Route path="/topics" element={<Topics />} />
+                    {/* <Route path="/topics" element={<Topics />} />
+                    <Route path="/transfer" element={<Transfer />} />
+                    <Route path="/quota" element={<Quota />} />
+                    <Route path="/residents" element={<Residents />} />
+                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
+                    <Route path="/residents/add" element={<ResidentPage />} />
+                    <Route path="/settings" element={<Settings />} /> */}
                 </Route>
             </Routes>
         </BrowserRouter>

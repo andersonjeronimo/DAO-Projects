@@ -1,19 +1,17 @@
 import { ethers } from "ethers";
 import ABI from './ABI.json';
-
-import { Profile, LoginResult, Resident } from "../utils/Utils";
-
+import { Profile, LoginResult, Resident, StorageKeys } from "../utils/Utils";
 import { doApiLogin } from "./APIService";
 
 const ADAPTER_ADDRESS = `${process.env.REACT_APP_ADAPTER_ADDRESS}`;
 
 function getProfile(): Profile {
-    const profile = localStorage.getItem("dao_profile") || "0";
+    const profile = localStorage.getItem(StorageKeys.PROFILE) || "0";
     return parseInt(profile);
 }
 
 export function isManagerOrCounselor(): boolean {
-    const profile = parseInt(localStorage.getItem("dao_profile") || "0");
+    const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
     return profile === Profile.MANAGER || profile === Profile.COUNSELOR;
 }
 
@@ -40,7 +38,7 @@ async function getContractSigner(provider?: ethers.BrowserProvider): Promise<eth
     if (!provider) {
         provider = getProvider();
     }
-    const signer = await provider.getSigner(localStorage.getItem("account") || undefined);
+    const signer = await provider.getSigner(localStorage.getItem(StorageKeys.ACCOUNT) || undefined);
     const contract = new ethers.Contract(ADAPTER_ADDRESS, ABI as ethers.InterfaceAbi, provider);
     return contract.connect(signer) as ethers.Contract;
 }
@@ -55,27 +53,26 @@ export async function doLogin(): Promise<LoginResult> {
 
     const contract = getContract(provider);
     const resident = (await contract.getResident(accounts[0])) as Resident;
-    let isManager = false;
+    let isManager = resident.isManager;
 
-
-    if (resident.residence > 0) {
-        if (resident.isCounselor)
-            localStorage.setItem("dao_profile", `${Profile.COUNSELOR}`);
-        else if (resident.isManager)
-            localStorage.setItem("dao_profile", `${Profile.MANAGER}`);
-        else localStorage.setItem("dao_profile", `${Profile.RESIDENT}`);
-    } else {
+    if (!isManager && resident.residence > 0) {
+        if (resident.isCounselor) {
+            localStorage.setItem(StorageKeys.PROFILE, `${Profile.COUNSELOR}`);
+        } else {
+            localStorage.setItem(StorageKeys.PROFILE, `${Profile.RESIDENT}`);
+        }
+    } else if (!isManager && !resident.residence) {
         const manager = (await contract.getManager()) as string;
         isManager = manager.toUpperCase() === accounts[0].toUpperCase();
-        if (isManager) {
-            localStorage.setItem("dao_profile", `${Profile.MANAGER}`);
-        } else {
-            localStorage.setItem("dao_profile", `${Profile.UNAUTHORIZED}`);
-            //throw new Error("Unauthorized");
-        }
     }
 
-    localStorage.setItem("metamask_account", accounts[0]);
+    if (isManager) {
+        localStorage.setItem(StorageKeys.PROFILE, `${Profile.MANAGER}`);
+    } else if (localStorage.getItem(StorageKeys.PROFILE) === null) {
+        localStorage.setItem(StorageKeys.PROFILE, `${Profile.UNAUTHORIZED}`);
+    }
+
+    localStorage.setItem(StorageKeys.ACCOUNT, accounts[0]);
 
     /**
      * Criar secret para geração de token (autenticação híbrida)
@@ -88,19 +85,19 @@ export async function doLogin(): Promise<LoginResult> {
      * Enviar secret para backend e receber o token gerado
      */
     const token = await doApiLogin(accounts[0], secret, timestamp);
-    localStorage.setItem("token", token);
+    localStorage.setItem(StorageKeys.TOKEN, token);
 
     return {
         account: accounts[0],
-        profile: parseInt(localStorage.getItem("dao_profile") || "0"),
+        profile: parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0"),
         token: token
     } as LoginResult;
 }
 
 export function doLogout() {
-    localStorage.removeItem("metamask_account");
-    localStorage.removeItem("dao_profile");
-    localStorage.removeItem("token");
+    localStorage.removeItem(StorageKeys.ACCOUNT);
+    localStorage.removeItem(StorageKeys.PROFILE);
+    localStorage.removeItem(StorageKeys.TOKEN);
 }
 
 export async function getAddress(): Promise<string> {
@@ -168,7 +165,7 @@ export async function removeResident(wallet: string): Promise<ethers.Transaction
     return await contract.removeResident(wallet) as ethers.Transaction;
 }
 
-export async function setCouselor(wallet: string, isEntering: boolean): Promise<ethers.Transaction> {
+export async function setCounselor(wallet: string, isEntering: boolean): Promise<ethers.Transaction> {
     if (getProfile() !== Profile.MANAGER) {
         throw new Error(`You do not have permission`);
     }

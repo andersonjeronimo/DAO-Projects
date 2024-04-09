@@ -6,27 +6,10 @@ import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
 import SwitchInput from "../../components/SwitchInput";
 import Alert from "../../components/Alert";
-import { addResident, isManagerOrCounselor, isAddressValid, doLogout, getResident, setCouselor } from "../../services/EthersService";
+import { addResident, isAddressValid, doLogout, getResident, setCounselor } from "../../services/EthersService";
 import { getApiResident, addApiResident, updateApiResident } from "../../services/APIService";
 
-import { Resident, ApiResident, Profile } from "../../utils/Utils";
-
-/* export type Resident = {
-    wallet: string,
-    isCounselor: boolean,
-    isManager: boolean,
-    residence: number,
-    nextPayment: number
-}
-
-export type ApiResident = {
-    wallet: string;
-    name: string;
-    profile: Profile;
-    phone?: string;
-    email?: string;
-}
- */
+import { Resident, ApiResident, Profile, StorageKeys } from "../../utils/Utils";
 
 function ResidentPage() {
 
@@ -37,12 +20,12 @@ function ResidentPage() {
     const [apiResident, setApiResident] = useState<ApiResident>({} as ApiResident);
 
     const navigate = useNavigate();
-    let { wallet } = useParams();
+    let { wallet } = useParams();  
 
-    useEffect(() => {
-        if (!isManagerOrCounselor()) {
+    useEffect(() => {        
+        if (parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0") !== Profile.MANAGER) {
             doLogout();
-            navigate("/");
+            navigate("/");            
         } else {
             setIsManager(true);
             if (wallet) {
@@ -82,10 +65,7 @@ function ResidentPage() {
         setApiResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 
-    function btnSaveClick(): void {
-        /* console.log(resident);
-        console.log(apiResident);
-        return; */
+    function btnSaveClick(): void {        
         if (!wallet) {
             if (resident.wallet !== "" && resident.residence > 0) {
                 //Entra nesse bloco se for adição de moradores
@@ -114,7 +94,7 @@ function ResidentPage() {
                 const profile = resident.isCounselor ? Profile.COUNSELOR : Profile.RESIDENT;
                 const promises = [];
                 if (apiResident.profile !== profile) {
-                    promises.push(setCouselor(resident.wallet, resident.isCounselor));
+                    promises.push(setCounselor(resident.wallet, resident.isCounselor));
                 }
                 promises.push(updateApiResident(wallet, {...apiResident, profile, wallet}));
                 Promise.all(promises)
@@ -226,13 +206,13 @@ function ResidentPage() {
                                                     <div className="col-md-12 mb-3">
                                                         <button className="btn bg-gradient-dark me-2" onClick={btnSaveClick}>
                                                             <i className="material-icons opacity-10 me-2">save</i>
-                                                            Save New Resident
+                                                            {wallet ? "Edit " : "Add "} Resident
                                                         </button>
                                                         <span className="text-danger">{message}</span>
                                                     </div>
                                                 ) : (
                                                     <div className="col-md-6 mb-3">
-                                                        <Alert text="Only a MANAGER or a COUNSELOR can ADD or EDIT residents." type="danger" icon="warning"></Alert>
+                                                        <Alert text="Only a MANAGER can ADD or EDIT residents." type="danger" icon="warning"></Alert>
                                                     </div>
                                                 )
                                             }
@@ -241,9 +221,9 @@ function ResidentPage() {
                                         {
                                             isManager && wallet ? (
                                                 <div className="row ms-3">
-                                                    <div className="col-md-12 mb-3">
-                                                        {/* <SwitchInput id="isCounselor" isChecked={counselor_state} onChange={handleIsCounselorChange} text="Is Counselor?"></SwitchInput> */}
-                                                        <SwitchInput id="isCounselor" isChecked={resident.isCounselor} onChange={handleResidentChange} text="Is Counselor?"></SwitchInput>
+                                                    <div className="col-md-12 mb-3">                                                        
+                                                        <SwitchInput id="isCounselor" isChecked={resident.isCounselor} 
+                                                        onChange={handleResidentChange} text="Is Counselor?"></SwitchInput>
                                                     </div>
                                                 </div>
                                             ) : (

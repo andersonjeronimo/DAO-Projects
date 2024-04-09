@@ -6,11 +6,14 @@ import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow";
 import { getResidents, removeResident, isAddressValid } from "../../services/EthersService";
-import { Resident } from "../../utils/Utils";
+import { Profile, Resident, StorageKeys } from "../../utils/Utils";
 import { ethers } from "ethers";
 import Pagination from "../../components/Pagination";
 
 function Residents() {    
+
+    const index = Number(localStorage.getItem(StorageKeys.PROFILE));
+    console.log(`Profile--> ${Profile[index]}`);
 
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");

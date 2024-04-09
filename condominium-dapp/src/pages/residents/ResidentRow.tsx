@@ -1,7 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { isManagerOrCounselor } from "../../services/EthersService";
-import { Resident } from "../../utils/Utils";
+import { Resident, StorageKeys, Profile } from "../../utils/Utils";
 import { ethers } from "ethers";
 
 type Props = {
@@ -17,7 +16,8 @@ type Props = {
 function ResidentRow(props: Props) {
     const [isManager, setIsManager] = useState<boolean>(false);
     useEffect(() => {
-        setIsManager(isManagerOrCounselor());
+        const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
+        setIsManager(profile === Profile.MANAGER);
     }, []);
 
     function getNextPayment(): string {

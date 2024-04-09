@@ -5,6 +5,12 @@ export enum Profile {
     UNAUTHORIZED = 3
 }
 
+export enum StorageKeys {
+    ACCOUNT = "account",
+    PROFILE = "profile",
+    TOKEN = "token"
+}
+
 export type Resident = {
     wallet: string,
     isCounselor: boolean,
