@@ -15,8 +15,8 @@ type Props = {
  */
 function ResidentRow(props: Props) {
     const [isManager, setIsManager] = useState<boolean>(false);
-    useEffect(() => {
-        const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
+    const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
+    useEffect(() => {        
         setIsManager(profile === Profile.MANAGER);
     }, []);
 

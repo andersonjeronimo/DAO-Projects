@@ -13,44 +13,39 @@ import { Resident, ApiResident, Profile, StorageKeys } from "../../utils/Utils";
 
 function ResidentPage() {
 
-    const [isLoading, setIsLoading] = useState<number>(0);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
     const [isManager, setIsManager] = useState<boolean>(false);
     const [resident, setResident] = useState<Resident>({} as Resident);
     const [apiResident, setApiResident] = useState<ApiResident>({} as ApiResident);
 
     const navigate = useNavigate();
-    let { wallet } = useParams();  
+    let { wallet } = useParams();
 
-    useEffect(() => {        
-        if (parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0") !== Profile.MANAGER) {
+    const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
+
+    useEffect(() => {
+        if (profile !== Profile.MANAGER) {
             doLogout();
-            navigate("/");            
+            navigate("/");
         } else {
             setIsManager(true);
             if (wallet) {
                 if (!isAddressValid(wallet)) {
                     setMessage("Invalid Wallet Address.")
                 } else {
-                    setIsLoading(1);
-                    getResident(wallet)
-                        .then(resident => {
-                            setResident(resident);
-                            setIsLoading(0);
+                    setIsLoading(true);
+                    const promiseBlockchain = getResident(wallet);
+                    const promiseBackend = getApiResident(wallet);
+                    Promise.all([promiseBlockchain, promiseBackend])
+                        .then(results => {
+                            setResident(results[0]);
+                            setApiResident(results[1]);
+                            setIsLoading(false);
                         })
                         .catch(err => {
                             setMessage(err.message);
-                            setIsLoading(0);
-                        })
-
-                    getApiResident(wallet)
-                        .then(apiResident => {
-                            setApiResident(apiResident);
-                            setIsLoading(1);
-                        })
-                        .catch(err => {
-                            setMessage(err.message);
-                            setIsLoading(0);
+                            setIsLoading(false);
                         })
                 }
             }
@@ -65,22 +60,22 @@ function ResidentPage() {
         setApiResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 
-    function btnSaveClick(): void {        
+    function btnSaveClick(): void {
         if (!wallet) {
             if (resident.wallet !== "" && resident.residence > 0) {
                 //Entra nesse bloco se for adição de moradores
                 if (isAddressValid(resident.wallet)) {
-                    setIsLoading(1);
+                    setIsLoading(true);
                     setMessage("Saving resident...wait...");
                     const promiseBlockchain = addResident(resident.wallet, resident.residence);
-                    const promiseBackend = addApiResident({...apiResident, profile:Profile.RESIDENT, wallet:resident.wallet});
+                    const promiseBackend = addApiResident({ ...apiResident, profile: Profile.RESIDENT, wallet: resident.wallet });
                     Promise.all([promiseBlockchain, promiseBackend])
                         .then(results => {
                             navigate("/residents?tx=" + results[0].hash);
                         })
                         .catch(err => {
                             setMessage(err.message);
-                            setIsLoading(0);
+                            setIsLoading(false);
                         });
                 } else {
                     setMessage("Invalid wallet address");
@@ -96,14 +91,14 @@ function ResidentPage() {
                 if (apiResident.profile !== profile) {
                     promises.push(setCounselor(resident.wallet, resident.isCounselor));
                 }
-                promises.push(updateApiResident(wallet, {...apiResident, profile, wallet}));
+                promises.push(updateApiResident(wallet, { ...apiResident, profile, wallet }));
                 Promise.all(promises)
-                    .then(results => {                        
+                    .then(results => {
                         navigate("/residents?tx=" + wallet)
                     })
                     .catch(err => {
                         setMessage(err.message);
-                        setIsLoading(0);
+                        setIsLoading(false);
                     })
             } else {
                 setMessage("Invalid Wallet Address");
@@ -130,7 +125,7 @@ function ResidentPage() {
                                     </div>
                                     <div className="card-body px-0 pb-2">
                                         {
-                                            isLoading > 0 ? (
+                                            isLoading ? (
                                                 <div className="row ms-3">
                                                     <div className="col-md-6 mb-3">
                                                         <p>
@@ -221,9 +216,9 @@ function ResidentPage() {
                                         {
                                             isManager && wallet ? (
                                                 <div className="row ms-3">
-                                                    <div className="col-md-12 mb-3">                                                        
-                                                        <SwitchInput id="isCounselor" isChecked={resident.isCounselor} 
-                                                        onChange={handleResidentChange} text="Is Counselor?"></SwitchInput>
+                                                    <div className="col-md-12 mb-3">
+                                                        <SwitchInput id="isCounselor" isChecked={resident.isCounselor}
+                                                            onChange={handleResidentChange} text="Is Counselor?"></SwitchInput>
                                                     </div>
                                                 </div>
                                             ) : (

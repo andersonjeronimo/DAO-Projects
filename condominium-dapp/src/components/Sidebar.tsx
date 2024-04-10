@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { doLogout } from "../services/EthersService";
-import { Profile } from "../utils/Utils";
+import { Profile, StorageKeys } from "../utils/Utils";
 
 function Sidebar() {
 
@@ -10,7 +10,7 @@ function Sidebar() {
     const [profile, setProfile] = useState<Profile>(Profile.RESIDENT);
 
     useEffect(() => {
-        const profile = parseInt(localStorage.getItem("dao_profile") || "0");
+        const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
         setProfile(profile);
     }, [])
 

@@ -6,6 +6,7 @@ import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
 import ResidentRow from "./ResidentRow";
 import { getResidents, removeResident, isAddressValid } from "../../services/EthersService";
+import { deleteApiResident } from "../../services/APIService";
 import { Profile, Resident, StorageKeys } from "../../utils/Utils";
 import { ethers } from "ethers";
 import Pagination from "../../components/Pagination";
@@ -53,8 +54,10 @@ function Residents() {
             setMessage("");
             setError("");
             setMessage("Removing resident...wait...");
-            removeResident(wallet)
-                .then(tx => navigate("/residents?tx=" + tx.hash))
+            const promiseBlockchain = removeResident(wallet);
+            const promiseBackend = deleteApiResident(wallet);
+            Promise.all([promiseBlockchain, promiseBackend])
+                .then(tx => navigate("/residents?tx=" + tx[0].hash))
                 .catch(err => {
                     setIsLoading(false);
                     setMessage(err.message);
