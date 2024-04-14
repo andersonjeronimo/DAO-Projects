@@ -4,12 +4,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Footer from "../../components/Footer";
 import Alert from "../../components/Alert";
+import Pagination from "../../components/Pagination";
+import { ethers } from "ethers";
+
 import ResidentRow from "./ResidentRow";
 import { getResidents, removeResident, isAddressValid } from "../../services/EthersService";
 import { deleteApiResident } from "../../services/APIService";
 import { Profile, Resident, StorageKeys } from "../../utils/Utils";
-import { ethers } from "ethers";
-import Pagination from "../../components/Pagination";
 
 function Residents() {    
 
@@ -18,10 +19,10 @@ function Residents() {
 
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
-    const [residents, setResidents] = useState<Resident[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [count, setCount] = useState<ethers.BigNumberish>(0);
-
+    const [residents, setResidents] = useState<Resident[]>([]);
+    
     const navigate = useNavigate();
 
     function useQuery() {

@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import ABI from './ABI.json';
-import { Profile, LoginResult, Resident, StorageKeys } from "../utils/Utils";
+import { Profile, LoginResult, Resident, StorageKeys, ResidentPage, Topic, TopicPage } from "../utils/Utils";
 import { doApiLogin } from "./APIService";
 
 const ADAPTER_ADDRESS = `${process.env.REACT_APP_ADAPTER_ADDRESS}`;
@@ -104,12 +104,6 @@ export async function getAddress(): Promise<string> {
     const contract = getContract();
     return contract.getImplementationAddress();//getAddress();
 }
-
-export type ResidentPage = {
-    residents: Resident[];
-    total: ethers.BigNumberish;
-}
-
 export async function getResidents(page: number, pageSize: number = 10): Promise<ResidentPage> {
     const contract = getContract();
     const result = await contract.getResidents(page, pageSize) as ResidentPage;
@@ -122,12 +116,6 @@ export async function getResidents(page: number, pageSize: number = 10): Promise
         total: result.total
     } as ResidentPage;
 }
-
-/**wallet: string,
-    isCounselor: boolean,
-    isManager: boolean,
-    residence: number,
-    nextPayment: number */
 
 export async function getResident(wallet: string): Promise<Resident> {
     const contract = getContract();
@@ -173,15 +161,45 @@ export async function setCounselor(wallet: string, isEntering: boolean): Promise
     return await contract.setCounselor(wallet, isEntering) as ethers.Transaction;
 }
 
-//Retorno do getResidents
-/* tuple :  0xAd886e0aeCEbe71C1DA549FccCa811BB2662d91b,1101,false,false,0,
-         0x7C3609F8f734b92084a82E5982CcC5197A4fC63C,1102,false,true,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         0x0000000000000000000000000000000000000000,0,false,false,0,
-         2 */
+/**
+ * TOPICS
+ */
+
+export async function getTopic(title: string): Promise<Topic> {
+    const contract = getContract();
+    const topic = await contract.getTopic(title);
+    return {
+        title: topic.title,
+        description: topic.description,
+        category: topic.category,
+        amount: topic.amount,
+        accountable: topic.accountable,
+        status: topic.status || undefined,
+        createdDate: topic.createdDate,
+        startDate: topic.startDate || undefined,
+        endDate: topic.endDate || undefined,
+    } as Topic;
+}
+
+export async function getTopics(page: number, pageSize: number = 10): Promise<TopicPage> {
+    const contract = getContract();
+    const result = await contract.getTopics(page, pageSize) as TopicPage;
+    const topics = result.topics.filter(t => t.createdDate);
+    return {
+        topics,
+        total: result.total
+    } as TopicPage;
+}
+
+export async function removeTopic(title: string): Promise<ethers.Transaction> {
+    if (getProfile() !== Profile.MANAGER) {
+        throw new Error(`You do not have permission`);
+    }
+    const contract = await getContractSigner();
+    return await contract.removeTopic(title) as ethers.Transaction;
+}
+
+export async function addTopic(): Promise<ethers.Transaction> {    
+    const contract = await getContractSigner();
+    return await contract.addTopic() as ethers.Transaction;
+}

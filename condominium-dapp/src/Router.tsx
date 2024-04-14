@@ -5,6 +5,7 @@ import Transfer from "./pages/Transfer";
 import Settings from "./pages/Settings";
 import Quota from "./pages/Quota";
 import Topics from "./pages/topics";
+import TopicPage from "./pages/topics/TopicPage";
 import Residents from "./pages/residents";
 import ResidentPage from "./pages/residents/ResidentPage";
 
@@ -58,44 +59,31 @@ function Router() {
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Login />} />
+
                 <Route element={<PrivateRoutes />}>
                     <Route path="/home" element={<Home />} />
-                    {/* <Route path="/home" element={<Home />} />
-                    <Route path="/topics" element={<Topics />} />
-                    <Route path="/transfer" element={<Transfer />} />
-                    <Route path="/quota" element={<Quota />} />
-                    <Route path="/residents" element={<Residents />} />
-                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
-                    <Route path="/residents/add" element={<ResidentPage />} />
-                    <Route path="/settings" element={<Settings />} /> */}
                 </Route>
+
                 <Route element={<ManagerRoutes />}>
-                    <Route path="/topics" element={<Topics />} />
-                    <Route path="/transfer" element={<Transfer />} />
-                    <Route path="/quota" element={<Quota />} />
                     <Route path="/residents" element={<Residents />} />
                     <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
                     <Route path="/residents/add" element={<ResidentPage />} />
+                    
+                    <Route path="/topics" element={<Topics />} />
+                    <Route path="/topics/edit/:title" element={<TopicPage />} />
+                    <Route path="/topics/add" element={<TopicPage />} />
+                    
+                    <Route path="/transfer" element={<Transfer />} />
+                    <Route path="/quota" element={<Quota />} />
                     <Route path="/settings" element={<Settings />} />
                 </Route>
+
                 <Route element={<CounselorRoutes />}>
-                    {/* <Route path="/topics" element={<Topics />} />
-                    <Route path="/transfer" element={<Transfer />} />
-                    <Route path="/quota" element={<Quota />} />
-                    <Route path="/residents" element={<Residents />} />
-                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
-                    <Route path="/residents/add" element={<ResidentPage />} />
-                    <Route path="/settings" element={<Settings />} /> */}
                 </Route>
+
                 <Route element={<ResidentRoutes />}>
-                    {/* <Route path="/topics" element={<Topics />} />
-                    <Route path="/transfer" element={<Transfer />} />
-                    <Route path="/quota" element={<Quota />} />
-                    <Route path="/residents" element={<Residents />} />
-                    <Route path="/residents/edit/:wallet" element={<ResidentPage />} />
-                    <Route path="/residents/add" element={<ResidentPage />} />
-                    <Route path="/settings" element={<Settings />} /> */}
                 </Route>
+
             </Routes>
         </BrowserRouter>
     );
