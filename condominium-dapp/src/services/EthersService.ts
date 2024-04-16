@@ -172,7 +172,7 @@ export async function getTopic(title: string): Promise<Topic> {
         title: topic.title,
         description: topic.description,
         category: topic.category,
-        amount: topic.amount,
+        amount: topic.amount || 0,
         accountable: topic.accountable,
         status: topic.status || undefined,
         createdDate: topic.createdDate,
@@ -199,7 +199,17 @@ export async function removeTopic(title: string): Promise<ethers.Transaction> {
     return await contract.removeTopic(title) as ethers.Transaction;
 }
 
-export async function addTopic(): Promise<ethers.Transaction> {    
+export async function addTopic(topic: Topic): Promise<ethers.Transaction> {
     const contract = await getContractSigner();
-    return await contract.addTopic() as ethers.Transaction;
+    topic.amount = ethers.toBigInt(topic.amount || 0);
+    return await contract.addTopic(topic.title, topic.description, topic.category, topic.amount, topic.accountable) as ethers.Transaction;
+}
+
+export async function editTopic(topicToEdit: string, description: string, amount: ethers.BigNumberish, accountable: string): Promise<ethers.Transaction> {
+    if (getProfile() !== Profile.MANAGER) {
+        throw new Error(`You do not have permission`);
+    }
+    amount = ethers.toBigInt(amount || 0);
+    const contract = await getContractSigner();
+    return await contract.editTopic(topicToEdit, description, amount, accountable) as ethers.Transaction;
 }

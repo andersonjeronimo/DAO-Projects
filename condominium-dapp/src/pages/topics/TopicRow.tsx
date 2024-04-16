@@ -50,7 +50,7 @@ function TopicRow(props: Props) {
                 <p className="text-xs font-weight-bold mb-0 px-3">{Category[props.data.category]}</p>
             </td>
             <td className="align-middle text-center">
-                <p className="text-xs font-weight-bold mb-0 px-3">{Status[props.data.status || 0]}</p>
+                <p className="text-xs font-weight-bold badge bg-success mb-0 px-3">{Status[props.data.status || 0]}</p>
             </td>
             <td className="align-middle text-center">
                 <p className="text-xs font-weight-bold mb-0 px-3">{getDate()}</p>
@@ -59,7 +59,7 @@ function TopicRow(props: Props) {
                 {
                     isManager ? (
                         <><a href={`/topics/edit/${props.data.title}`} className="btn btn-info btn-sm me-1">
-                            <i className="material-icons text-sm">edit</i>
+                            <i className="material-icons text-sm">visibility</i>
                         </a>
                             <a href="#" className="btn btn-danger btn-sm me-1" onClick={btnDeleteClick}>
                                 <i className="material-icons text-sm">delete</i>

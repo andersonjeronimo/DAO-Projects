@@ -4,11 +4,10 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
-import Alert from "../../components/Alert";
 import { ethers } from "ethers";
 import TopicCategory from "../../components/TopicCategory";
 
-import { addTopic, getTopic, doLogout } from "../../services/EthersService";
+import { addTopic, getTopic, editTopic } from "../../services/EthersService";
 
 import { Category, Status, Topic } from "../../utils/Utils";
 
@@ -27,13 +26,15 @@ function TopicPage() {
             const promiseBlockchain = getTopic(title);
             Promise.all([promiseBlockchain])
                 .then(results => {
-                    setTopic(results[0]);
+                    setTopic(results[0]);                    
                     setIsLoading(false);
                 })
                 .catch(err => {
                     setMessage(err.message);
                     setIsLoading(false);
                 })
+        } else {
+            topic.accountable = localStorage.getItem("account") || "";
         }
     }, [title]);
 
@@ -42,24 +43,23 @@ function TopicPage() {
     }
 
     function showAccountable(): boolean {
+        topic.category = parseInt(`${topic.category}`);
         return [Category.SPENT, Category.CHANGE_MANAGER].includes(topic.category);
     }
 
     function showAmount(): boolean {
+        topic.category = parseInt(`${topic.category}`);
         return [Category.SPENT, Category.CHANGE_QUOTA].includes(topic.category);
     }
 
     function isClosed(): boolean {
-        return [Status.APPROVED, Status.DELETED, Status.DENIED, Status.SPENT].includes(topic.status || 0);
+        topic.status = parseInt(`${topic.status || 0}`);
+        return [Status.APPROVED, Status.DELETED, Status.DENIED, Status.SPENT].includes(topic.status);
     }
 
-    function getDate(dateBN: ethers.BigNumberish): string {
+    function parseDate(dateBN: ethers.BigNumberish): string {
         const dateMs = ethers.toNumber(ethers.toBigInt(dateBN)) * 1000;
         return !dateMs ? "" : new Date(dateMs).toDateString();
-    }
-
-    function parseAmount(amount: ethers.BigNumberish): number {
-        return ethers.toNumber(ethers.toBigInt(amount));
     }
 
     function btnSaveClick(): void {
@@ -67,7 +67,7 @@ function TopicPage() {
             if (!title) {
                 setIsLoading(true);
                 setMessage("Saving topic...wait...");
-                const promiseBlockchain = addTopic();
+                const promiseBlockchain = addTopic(topic);
                 Promise.all([promiseBlockchain])
                     .then(results => {
                         navigate("/topics?tx=" + results[0].hash);
@@ -77,20 +77,17 @@ function TopicPage() {
                         setIsLoading(false);
                     });
             } else {
-                if (topic.title !== "") {
-
-                    /* const promiseBlockchain = editTopic(topic);
-
-                    Promise.all([promiseBlockchain])
-                        .then(results => {
-                            navigate("/topics?tx=" + results[0].hash)
-                        })
-                        .catch(err => {
-                            setMessage(err.message);
-                            setIsLoading(false);
-                        }) */
-                }
+                const promiseBlockchain = editTopic(title, topic.description, topic.amount, topic.accountable);
+                Promise.all([promiseBlockchain])
+                    .then(results => {
+                        navigate("/topics?tx=" + results[0].hash)
+                    })
+                    .catch(err => {
+                        setMessage(err.message);
+                        setIsLoading(false);
+                    })
             }
+
         }
     }
 
@@ -193,9 +190,7 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="amount">Amount (Wei):</label>
                                                             <div className="input-group input-group-outline">
-                                                                {/* <input type="number" className="form-control" id="amount" value={parseAmount(topic.amount)}
-                                                                    placeholder="Accountable" onChange={handleTopicChange} disabled={!!title && topic.status !== Status.IDLE} /> */}
-                                                                <input type="text" className="form-control" id="amount" value={(topic.amount).toString()}
+                                                                <input type="text" className="form-control" id="amount" value={(topic.amount || 0).toString()}
                                                                     placeholder="Accountable" onChange={handleTopicChange} disabled={!!title && topic.status !== Status.IDLE} />
                                                             </div>
                                                         </div>
@@ -210,7 +205,7 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="createdDate">Created Date:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="createdDate" value={getDate(topic.createdDate)} disabled={true} />
+                                                                <input type="text" className="form-control" id="createdDate" value={parseDate(topic.createdDate || 0)} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -224,7 +219,7 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="startDate">Start Date:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="startDate" value={getDate(topic.startDate || 0)} disabled={true} />
+                                                                <input type="text" className="form-control" id="startDate" value={parseDate(topic.startDate || 0)} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -238,7 +233,7 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="endDate">End Date:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="endDate" value={getDate(topic.endDate || 0)} disabled={true} />
+                                                                <input type="text" className="form-control" id="endDate" value={parseDate(topic.endDate || 0)} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
