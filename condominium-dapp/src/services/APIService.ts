@@ -1,6 +1,6 @@
 //import axios from "axios";
 import axios from "./AxiosConfig";
-import { ApiResident } from "../utils/Utils";
+import { ApiResident } from "../utils/Lib";
 
 const API_URL = `${process.env.REACT_APP_API_URL}`;
 

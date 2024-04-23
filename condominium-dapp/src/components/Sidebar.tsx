@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { doLogout } from "../services/EthersService";
-import { Profile, StorageKeys } from "../utils/Utils";
+import { Profile, StorageKeys } from "../utils/Lib";
 
 function Sidebar() {
 

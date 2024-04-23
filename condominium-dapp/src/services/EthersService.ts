@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import ABI from './ABI.json';
-import { Profile, LoginResult, Resident, StorageKeys, ResidentPage, Topic, TopicPage } from "../utils/Utils";
+import { Profile, LoginResult, Resident, StorageKeys, ResidentPage, Topic, TopicPage } from "../utils/Lib";
 import { doApiLogin } from "./APIService";
 
 const ADAPTER_ADDRESS = `${process.env.REACT_APP_ADAPTER_ADDRESS}`;
@@ -13,6 +13,11 @@ function getProfile(): Profile {
 export function isManagerOrCounselor(): boolean {
     const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
     return profile === Profile.MANAGER || profile === Profile.COUNSELOR;
+}
+
+export function isManager(): boolean {
+    const profile = parseInt(localStorage.getItem(StorageKeys.PROFILE) || "0");
+    return profile === Profile.MANAGER;
 }
 
 export function isAddressValid(address: string): boolean {
@@ -168,7 +173,7 @@ export async function setCounselor(wallet: string, isEntering: boolean): Promise
 export async function getTopic(title: string): Promise<Topic> {
     const contract = getContract();
     const topic = await contract.getTopic(title);
-    return {
+    /* return {
         title: topic.title,
         description: topic.description,
         category: topic.category,
@@ -178,7 +183,8 @@ export async function getTopic(title: string): Promise<Topic> {
         createdDate: topic.createdDate,
         startDate: topic.startDate || undefined,
         endDate: topic.endDate || undefined,
-    } as Topic;
+    } as Topic; */
+    return topic as Topic;
 }
 
 export async function getTopics(page: number, pageSize: number = 10): Promise<TopicPage> {

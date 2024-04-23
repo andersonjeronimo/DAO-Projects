@@ -1,5 +1,5 @@
 import axios from "axios";
-import { StorageKeys } from "../utils/Utils";
+import { StorageKeys } from "../utils/Lib";
 
 const instance = axios.create({
     headers: {

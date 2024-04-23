@@ -9,7 +9,7 @@ import Alert from "../../components/Alert";
 import { addResident, isAddressValid, doLogout, getResident, setCounselor } from "../../services/EthersService";
 import { getApiResident, addApiResident, updateApiResident } from "../../services/APIService";
 
-import { Resident, ApiResident, Profile, StorageKeys } from "../../utils/Utils";
+import { Resident, ApiResident, Profile, StorageKeys } from "../../utils/Lib";
 
 function ResidentPage() {
 
@@ -52,11 +52,12 @@ function ResidentPage() {
         }
     }, [wallet]);
 
-    function handleResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
+    function handleResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {        
         setResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 
     function handleApiResidentChange(evt: React.ChangeEvent<HTMLInputElement>) {
+        console.log(apiResident);
         setApiResident(prevState => ({ ...prevState, [evt.target.id]: evt.target.value }));
     }
 

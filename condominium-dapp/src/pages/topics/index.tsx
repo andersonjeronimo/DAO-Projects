@@ -8,7 +8,7 @@ import Alert from "../../components/Alert";
 import Pagination from "../../components/Pagination";
 import { ethers } from "ethers";
 
-import { Topic } from "../../utils/Utils";
+import { Topic } from "../../utils/Lib";
 import { getTopics, removeTopic } from "../../services/EthersService";
 import TopicRow from "./TopicRow";
 

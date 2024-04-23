@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { Resident, StorageKeys, Profile } from "../../utils/Utils";
+import { Resident, StorageKeys, Profile } from "../../utils/Lib";
 import { ethers } from "ethers";
 
 type Props = {

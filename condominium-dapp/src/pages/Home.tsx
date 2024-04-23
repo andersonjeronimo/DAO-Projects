@@ -1,6 +1,6 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
-import { Profile, StorageKeys } from "../utils/Utils";
+import { Profile, StorageKeys } from "../utils/Lib";
 
 function Home() {
     const index = Number(localStorage.getItem(StorageKeys.PROFILE));

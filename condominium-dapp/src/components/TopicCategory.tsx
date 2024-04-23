@@ -4,7 +4,7 @@ type Props = {
     disabled?: boolean;
 }
 
-function TopicCategory(props: Props) {
+function TopicCategory(props: Props) {    
     function onCategoryChange(event: React.ChangeEvent<HTMLSelectElement>) {
         if (!event.target.value) {
             return;
@@ -12,7 +12,7 @@ function TopicCategory(props: Props) {
         props.onChange({ target: { id: "category", value: event.target.value } });
     }
 
-    return (<select id="category" className="form-select px-3" value={props.value}
+    return (<select id="category" className="form-select px-3" value={(Number(props.value)).toString()}
         onChange={onCategoryChange} disabled={props.disabled}>
         <option value="">Select...</option>
         <option value="0">Decision</option>

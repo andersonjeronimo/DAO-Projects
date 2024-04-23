@@ -10,8 +10,8 @@ import Residents from "./pages/residents";
 import ResidentPage from "./pages/residents/ResidentPage";
 
 import { doLogout } from "./services/EthersService";
-import { Profile as ProfileEnum } from "./utils/Utils"
-import { StorageKeys } from "./utils/Utils";
+import { Profile as ProfileEnum } from "./utils/Lib"
+import { StorageKeys } from "./utils/Lib";
 
 function Router() {
 

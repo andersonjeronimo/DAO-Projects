@@ -4,29 +4,54 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
-import { ethers } from "ethers";
 import TopicCategory from "../../components/TopicCategory";
 
-import { addTopic, getTopic, editTopic } from "../../services/EthersService";
-
-import { Category, Status, Topic } from "../../utils/Utils";
+import { addTopic, getTopic, editTopic, isManager } from "../../services/EthersService";
+import { Category, Status, Topic } from "../../utils/Lib";
 
 function TopicPage() {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
-    const [topic, setTopic] = useState<Topic>({} as Topic);
+    const [manager, setIsManager] = useState<boolean>(false);
+
+    //const [_title, setTitle] = useState<string>("");
+    const [_description, setDescription] = useState<string>("");
+    const [_category, setCategory] = useState<Category>(Category.DECISION);
+    const [_amount, setAmount] = useState<number>(0);
+    const [_accountable, setAccountable] = useState<string>("");
+    const [_status, setStatus] = useState<Status>(Status.IDLE);
+    const [_createdDate, setCreatedDate] = useState<number>(0);
+    const [_startDate, setStartDate] = useState<number>(0);
+    const [_endDate, setEndDate] = useState<number>(0);
+
+    function handleCategoryChange(evt: React.ChangeEvent<HTMLInputElement>) {
+        setCategory(Number(evt.target.value));
+    }
+
+    function setTopicState(topic: Topic) {
+        //setTitle(topic.title);
+        setDescription(topic.description);
+        setCategory(topic.category);
+        setAmount(Number(topic.amount));
+        setAccountable(topic.accountable);
+        setStatus(topic.status);
+        setCreatedDate(Number(topic.createdDate));
+        setStartDate(Number(topic.startDate || 0));
+        setEndDate(Number(topic.endDate || 0));
+    }
 
     const navigate = useNavigate();
     let { title } = useParams();
 
     useEffect(() => {
+        setIsManager(isManager());
         if (title) {
             setIsLoading(true);
             const promiseBlockchain = getTopic(title);
             Promise.all([promiseBlockchain])
                 .then(results => {
-                    setTopic(results[0]);                    
+                    setTopicState(results[0]);
                     setIsLoading(false);
                 })
                 .catch(err => {
@@ -34,60 +59,87 @@ function TopicPage() {
                     setIsLoading(false);
                 })
         } else {
-            topic.accountable = localStorage.getItem("account") || "";
+            setAccountable(localStorage.getItem("account") || "");
         }
     }, [title]);
 
-    function handleTopicChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setTopic(prevState => ({ ...prevState, [event.target.id]: event.target.value }));
-    }
 
     function showAccountable(): boolean {
-        topic.category = parseInt(`${topic.category}`);
-        return [Category.SPENT, Category.CHANGE_MANAGER].includes(topic.category);
+        const category = Number(_category);
+        return [Category.SPENT, Category.CHANGE_MANAGER].includes(category);
     }
 
     function showAmount(): boolean {
-        topic.category = parseInt(`${topic.category}`);
-        return [Category.SPENT, Category.CHANGE_QUOTA].includes(topic.category);
+        const category = Number(_category);
+        return [Category.SPENT, Category.CHANGE_QUOTA].includes(category);
+    }
+
+    function isDisabled(): boolean {
+        return !!title && (Number(_status) !== Status.IDLE || !isManager());
     }
 
     function isClosed(): boolean {
-        topic.status = parseInt(`${topic.status || 0}`);
-        return [Status.APPROVED, Status.DELETED, Status.DENIED, Status.SPENT].includes(topic.status);
+        const status = Number(_status);
+        return [Status.APPROVED, Status.DELETED, Status.DENIED, Status.SPENT].includes(status);
     }
 
-    function parseDate(dateBN: ethers.BigNumberish): string {
-        const dateMs = ethers.toNumber(ethers.toBigInt(dateBN)) * 1000;
+    function getCreatedDate(): string {
+        const dateMs = Number(_createdDate || 0) * 1000;
         return !dateMs ? "" : new Date(dateMs).toDateString();
     }
 
-    function btnSaveClick(): void {
-        if (topic) {
-            if (!title) {
-                setIsLoading(true);
-                setMessage("Saving topic...wait...");
-                const promiseBlockchain = addTopic(topic);
-                Promise.all([promiseBlockchain])
-                    .then(results => {
-                        navigate("/topics?tx=" + results[0].hash);
-                    })
-                    .catch(err => {
-                        setMessage(err.message);
-                        setIsLoading(false);
-                    });
-            } else {
-                const promiseBlockchain = editTopic(title, topic.description, topic.amount, topic.accountable);
-                Promise.all([promiseBlockchain])
-                    .then(results => {
-                        navigate("/topics?tx=" + results[0].hash)
-                    })
-                    .catch(err => {
-                        setMessage(err.message);
-                        setIsLoading(false);
-                    })
-            }
+    function getStartDate(): string {
+        if (_startDate !== 0) {
+            const dateMs = _startDate * 1000;
+            return new Date(dateMs).toDateString();
+        }
+        return "Not started yet";
+    }
 
+    function getEndDate(): string {
+        if (_endDate > 0) {
+            const dateMs = _endDate * 1000;
+            return new Date(dateMs).toDateString();
+        }
+        return "Not started yet";
+    }
+
+    function btnSaveClick(): void {
+        if (!title) {
+            setIsLoading(true);
+            setMessage("Saving topic...wait...");
+
+            const newTopic = {
+                title: title,
+                description: _description,
+                category: _category,
+                amount: _amount,
+                accountable: _accountable,
+                status: _status,
+                createdDate: _createdDate,
+                startDate: _startDate,
+                endDate: _endDate
+            } as Topic;
+
+            const promiseBlockchain = addTopic(newTopic);
+            Promise.all([promiseBlockchain])
+                .then(results => {
+                    navigate("/topics?tx=" + results[0].hash);
+                })
+                .catch(err => {
+                    setMessage(err.message);
+                    setIsLoading(false);
+                });
+        } else {
+            const promiseBlockchain = editTopic(title, _description, _amount, _accountable);
+            Promise.all([promiseBlockchain])
+                .then(results => {
+                    navigate("/topics?tx=" + results[0].hash)
+                })
+                .catch(err => {
+                    setMessage(err.message);
+                    setIsLoading(false);
+                })
         }
     }
 
@@ -127,8 +179,7 @@ function TopicPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="title">Title:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="text" className="form-control" id="title" value={topic.title || ""} placeholder="The topic title..."
-                                                            onChange={handleTopicChange} disabled={!!title} />
+                                                        <input type="text" className="form-control" id="title" value={title} disabled={!!title} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -138,9 +189,8 @@ function TopicPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="description">Description:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="text" className="form-control" id="description" value={topic.description || ""}
-                                                            placeholder="Description..."
-                                                            onChange={handleTopicChange} disabled={!!title && topic.status !== Status.IDLE} />
+                                                        <input type="text" className="form-control" id="description" value={_description}
+                                                            onChange={e => setDescription(e.target.value)} disabled={false} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -152,7 +202,7 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="status">Status:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="status" value={Status[topic.status || 0]} disabled={true} />
+                                                                <input type="text" className="form-control" id="status" value={Status[Number(_status)]} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -163,7 +213,7 @@ function TopicPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="category">Category:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <TopicCategory value={topic.category} onChange={handleTopicChange} disabled={!!title}></TopicCategory>
+                                                        <TopicCategory value={Number(_category)} onChange={handleCategoryChange} disabled={!!title}></TopicCategory>
                                                     </div>
                                                 </div>
                                             </div>
@@ -175,8 +225,8 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="accountable">Accountable:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="accountable" value={topic.accountable}
-                                                                    placeholder="Accountable" onChange={handleTopicChange} disabled={!!title && topic.status !== Status.IDLE} />
+                                                                <input type="text" className="form-control" id="accountable" value={_accountable}
+                                                                    onChange={e => setAccountable(e.target.value)} disabled={isDisabled()} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -190,8 +240,8 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="amount">Amount (Wei):</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="amount" value={(topic.amount || 0).toString()}
-                                                                    placeholder="Accountable" onChange={handleTopicChange} disabled={!!title && topic.status !== Status.IDLE} />
+                                                                <input type="text" className="form-control" id="amount" value={(_amount).toString()}
+                                                                    onChange={e => setAmount(Number(e.target.value))} disabled={isDisabled()} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -205,7 +255,7 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="createdDate">Created Date:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="createdDate" value={parseDate(topic.createdDate || 0)} disabled={true} />
+                                                                <input type="text" className="form-control" id="createdDate" value={getCreatedDate()} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -213,13 +263,13 @@ function TopicPage() {
                                         }
 
                                         {
-                                            isClosed() && topic.status === Status.VOTING ? (
+                                            isClosed() && Number(_status) === Status.VOTING ? (
                                                 <div className="row ms-3">
                                                     <div className="col-md-6 mb-3">
                                                         <div className="form-group">
                                                             <label htmlFor="startDate">Start Date:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="startDate" value={parseDate(topic.startDate || 0)} disabled={true} />
+                                                                <input type="text" className="form-control" id="startDate" value={getStartDate()} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -233,22 +283,37 @@ function TopicPage() {
                                                         <div className="form-group">
                                                             <label htmlFor="endDate">End Date:</label>
                                                             <div className="input-group input-group-outline">
-                                                                <input type="text" className="form-control" id="endDate" value={parseDate(topic.endDate || 0)} disabled={true} />
+                                                                <input type="text" className="form-control" id="endDate" value={getEndDate()} disabled={true} />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>) : (<></>)
                                         }
 
-                                        <div className="row ms-3">
-                                            <div className="col-md-12 mb-3">
-                                                <button className="btn bg-gradient-dark me-2" onClick={btnSaveClick}>
-                                                    <i className="material-icons opacity-10 me-2">save</i>
-                                                    {title ? "Edit " : "Add "} Topic
-                                                </button>
-                                                <span className="text-danger">{message}</span>
-                                            </div>
-                                        </div>
+                                        {
+                                            title ? (
+                                                manager && Number(_status) === Status.IDLE ? (
+                                                    <div className="row ms-3">
+                                                        <div className="col-md-12 mb-3">
+                                                            <button className="btn bg-gradient-dark me-2" onClick={btnSaveClick}>
+                                                                <i className="material-icons opacity-10 me-2">save</i>
+                                                                Edit Topic
+                                                            </button>
+                                                            <span className="text-danger">{message}</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (<></>)
+                                            ) : (
+                                                <div className="row ms-3">
+                                                    <div className="col-md-12 mb-3">
+                                                        <button className="btn bg-gradient-dark me-2" onClick={btnSaveClick}>
+                                                            <i className="material-icons opacity-10 me-2">save</i>
+                                                            Add Topic
+                                                        </button>
+                                                        <span className="text-danger">{message}</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
                             </div>

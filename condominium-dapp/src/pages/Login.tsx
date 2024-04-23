@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doLogin, doLogout } from '../services/EthersService';
-import { Profile } from '../utils/Utils';
+import { Profile } from '../utils/Lib';
 
 function Login() {
 
@@ -9,6 +9,7 @@ function Login() {
   const [message, setMessage] = useState<string>("");
 
   function btnLoginClick() {
+    setMessage("Logging in...");
     doLogin()
       .then(result => {
         if (result.profile !== Profile.UNAUTHORIZED) {          

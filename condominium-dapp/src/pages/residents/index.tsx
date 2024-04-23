@@ -10,7 +10,7 @@ import { ethers } from "ethers";
 import ResidentRow from "./ResidentRow";
 import { getResidents, removeResident, isAddressValid } from "../../services/EthersService";
 import { deleteApiResident } from "../../services/APIService";
-import { Profile, Resident, StorageKeys } from "../../utils/Utils";
+import { Profile, Resident, StorageKeys } from "../../utils/Lib";
 
 function Residents() {    
 

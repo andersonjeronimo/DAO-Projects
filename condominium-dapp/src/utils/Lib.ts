@@ -41,25 +41,6 @@ export type LoginResult = {
     token: string;
 }
 
-export type TopicPage = {
-    topics: Topic[];
-    total: ethers.BigNumberish;
-}
-
-export type Topic = {
-    title: string;
-    description: string;
-    category: Category;
-    //amount: number;
-    amount: ethers.BigNumberish;
-    //responsible: string;
-    accountable: string;
-    status?: Status;
-    createdDate: ethers.BigNumberish;
-    startDate?: ethers.BigNumberish;
-    endDate?: ethers.BigNumberish;
-}
-
 export enum Status {
     IDLE = 0,
     VOTING = 1,
@@ -74,6 +55,25 @@ export enum Category {
     SPENT = 1,
     CHANGE_QUOTA = 2,
     CHANGE_MANAGER = 3
+}
+
+export type TopicPage = {
+    topics: Topic[];
+    total: ethers.BigNumberish;
+}
+
+export type Topic = {
+    title: string;
+    description: string;
+    category: Category;
+    //amount: number;
+    amount: ethers.BigNumberish;
+    //responsible: string;
+    accountable: string;
+    status: Status;
+    createdDate: ethers.BigNumberish;
+    startDate?: ethers.BigNumberish;
+    endDate?: ethers.BigNumberish;
 }
 
 export enum CategoryStr {
