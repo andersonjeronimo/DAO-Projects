@@ -329,7 +329,7 @@ contract Condominium is ICondominium {
         uint index = 0;
         for (
             uint i = skip;
-            i < (skip + pageSize) && i < residents.length;
+            i < (skip + pageSize) && i < topics.length;
             i++
         ) {
             result[index++] = topics[i];

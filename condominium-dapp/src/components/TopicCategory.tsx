@@ -12,7 +12,7 @@ function TopicCategory(props: Props) {
         props.onChange({ target: { id: "category", value: event.target.value } });
     }
 
-    return (<select id="category" className="form-select px-3" value={(Number(props.value)).toString()}
+    return (<select id="category" className="form-select px-3" value={(props.value).toString()}
         onChange={onCategoryChange} disabled={props.disabled}>
         <option value="">Select...</option>
         <option value="0">Decision</option>

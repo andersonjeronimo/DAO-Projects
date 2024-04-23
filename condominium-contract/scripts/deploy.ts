@@ -28,9 +28,9 @@ main().catch((error) => {
 
 /**
  * 
- * --NEW CONTRACT DEPLOY (09/04/2024)
- * Contract deployed to: 0xfaf6eF438Ba98F141EBF2eDA97d7eeCa261E6548
- * Contract Adapter upgraded to: 0xfaf6eF438Ba98F141EBF2eDA97d7eeCa261E6548 (via testnet.bdcscan)
+ * --NEW CONTRACT DEPLOY (23/04/2024)
+ * Contract deployed to: 0x3C8AE1Cd9bf124ce57C7e1f9F33A0DC68f8da2F0
+ * Contract Adapter upgraded to: 0x3C8AE1Cd9bf124ce57C7e1f9F33A0DC68f8da2F0 (via testnet.bdcscan)
 -----NEW DEPLOY (18Fev2024)
 Contract Adapter deployed to: 0x6aC9439e284dbeAb24a8cEd5dcB216004f3C39b9
 Contract Adapter upgraded to: 0x5C056a2900706C7053d9bb677259f6BcD22aCD4F

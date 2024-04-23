@@ -187,7 +187,7 @@ export async function getTopic(title: string): Promise<Topic> {
     return topic as Topic;
 }
 
-export async function getTopics(page: number, pageSize: number = 10): Promise<TopicPage> {
+export async function getTopics(page: number, pageSize?: number): Promise<TopicPage> {
     const contract = getContract();
     const result = await contract.getTopics(page, pageSize) as TopicPage;
     const topics = result.topics.filter(t => t.createdDate);

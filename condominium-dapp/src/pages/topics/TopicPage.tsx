@@ -15,7 +15,7 @@ function TopicPage() {
     const [message, setMessage] = useState<string>("");
     const [manager, setIsManager] = useState<boolean>(false);
 
-    //const [_title, setTitle] = useState<string>("");
+    const [_title, setTitle] = useState<string>("");
     const [_description, setDescription] = useState<string>("");
     const [_category, setCategory] = useState<Category>(Category.DECISION);
     const [_amount, setAmount] = useState<number>(0);
@@ -30,7 +30,7 @@ function TopicPage() {
     }
 
     function setTopicState(topic: Topic) {
-        //setTitle(topic.title);
+        setTitle(topic.title);
         setDescription(topic.description);
         setCategory(topic.category);
         setAmount(Number(topic.amount));
@@ -110,16 +110,18 @@ function TopicPage() {
             setMessage("Saving topic...wait...");
 
             const newTopic = {
-                title: title,
+                title: _title,
                 description: _description,
                 category: _category,
                 amount: _amount,
-                accountable: _accountable,
-                status: _status,
+                accountable: _accountable
+                /* status: _status,
                 createdDate: _createdDate,
-                startDate: _startDate,
-                endDate: _endDate
+                startDate: _startDate, 
+                endDate: _endDate */
             } as Topic;
+
+            console.log(newTopic);
 
             const promiseBlockchain = addTopic(newTopic);
             Promise.all([promiseBlockchain])
@@ -179,7 +181,9 @@ function TopicPage() {
                                                 <div className="form-group">
                                                     <label htmlFor="title">Title:</label>
                                                     <div className="input-group input-group-outline">
-                                                        <input type="text" className="form-control" id="title" value={title} disabled={!!title} />
+                                                        <input type="text" className="form-control" id="title" value={_title} 
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        disabled={!!title} />
                                                     </div>
                                                 </div>
                                             </div>

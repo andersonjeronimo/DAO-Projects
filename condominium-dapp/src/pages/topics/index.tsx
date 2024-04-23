@@ -30,7 +30,7 @@ function Topics() {
 
     useEffect(() => {
         setIsLoading(true);
-        getTopics(parseInt(query.get("page") || "1"))
+        getTopics(parseInt(query.get("page") || "1"), 10)
             .then(result => {
                 setTopics(result.topics);
                 setCount(result.total);

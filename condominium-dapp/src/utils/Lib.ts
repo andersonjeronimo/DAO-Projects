@@ -65,10 +65,8 @@ export type TopicPage = {
 export type Topic = {
     title: string;
     description: string;
-    category: Category;
-    //amount: number;
-    amount: ethers.BigNumberish;
-    //responsible: string;
+    category: Category;    
+    amount: ethers.BigNumberish;    
     accountable: string;
     status: Status;
     createdDate: ethers.BigNumberish;

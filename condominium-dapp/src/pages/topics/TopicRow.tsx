@@ -25,11 +25,7 @@ function TopicRow(props: Props) {
         //const text = !dateMs ? "Null" : new Date(dateMs).toDateString();
         const text = new Date(dateMs).toDateString();
         return text;
-    }
-
-    function getCategory(): string {
-        return Category[props.data.category];
-    }
+    }    
 
     function btnDeleteClick() {
         if (window.confirm("Are you sure to delete this topic?")) {
@@ -57,7 +53,7 @@ function TopicRow(props: Props) {
             </td>
             <td className="align-middle text-center">
                 {
-                    isManager ? (
+                    isManager && Number(props.data.status) === Status.IDLE ? (
                         <><a href={`/topics/edit/${props.data.title}`} className="btn btn-info btn-sm me-1">
                             <i className="material-icons text-sm">visibility</i>
                         </a>
